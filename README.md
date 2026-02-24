@@ -31,6 +31,12 @@ curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/m
 - `./bookmarks diff`
 - `./bookmarks request <scenario description>`
 
+Output mode:
+
+- default: YAML (human-readable)
+- JSON: `-j` or `--json`
+- field selection (scenario/API): `-f id,title,url` or `--fields id,title,url`
+
 ## Tests
 
 ```bash

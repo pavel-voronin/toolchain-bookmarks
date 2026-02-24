@@ -7,6 +7,16 @@ description: Work with user's bookmarks via local bookmarks CLI
 
 Use this exact binary path (do not rely on PATH): `{{BOOKMARKS_BIN}}`
 
+## Output modes
+
+Human mode (default): YAML.
+Machine mode (less tokens, use it): JSON via `-j`/`--json`.
+
+Field selection is supported for scenario/API calls:
+
+- `-f id,title,url`
+- `--fields id,title,url`
+
 ## Commands You Should Use
 
 `{{BOOKMARKS_BIN}} inbox-links` - List links in Inbox.
@@ -34,30 +44,38 @@ If scenario API is missing and file-level fallback is required:
 2. If scenario is read-only, then use narrow jq query only (targeted path/filter), never dump whole file.
 3. If scenario is for write, then try to solve with existing commands or stop and report.
 
-## Bookmarks File Shape
+## Bookmarks File Shape (Practical)
 
-Top-level object must contain:
+Top-level fields (common):
 
 - `checksum` (string)
-- `version` (integer)
-- `roots` (object) with exactly:
-  - `bookmark_bar` (node)
-  - `other` (node)
-  - `synced` (node)
+- `version` (number)
+- `roots` (object)
 
-Node shape (recursive):
+`roots` usually contains folder nodes:
+
+- `bookmark_bar`
+- `other`
+- `synced`
+
+Some Chrome variants/profiles may include additional roots (for example managed/account roots). Treat unknown roots as valid folder roots.
+
+Node base shape (common):
 
 - `id` (string)
 - `guid` (string)
 - `name` (string)
 - `date_added` (string)
-- `type` in `["folder","url"]`
+- `type` in `['folder', 'url']`
 
-Rules:
+Folder node:
 
-- if `type=="folder"`:
-  - required: `children` (array of nodes)
-  - forbidden: `url`
-- if `type=="url"`:
-  - required: `url` (string)
-  - forbidden: `children`
+- required: `children` (array of nodes)
+- optional: `date_modified` (string), `meta_info` (object)
+- forbidden: `url`
+
+URL node:
+
+- required: `url` (string)
+- optional: `meta_info` (object)
+- forbidden: `children`
