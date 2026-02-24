@@ -52,7 +52,7 @@ export async function promptConfig(
       BOOKMARKS_FILE: await ask(rl, 'BOOKMARKS_FILE', base.BOOKMARKS_FILE),
       CDP_HTTP: await ask(rl, 'CDP_HTTP', base.CDP_HTTP),
       BOOKMARKS_EXTENSION_ID: await ask(rl, 'BOOKMARKS_EXTENSION_ID', base.BOOKMARKS_EXTENSION_ID),
-      INBOX_FOLDER_ID: await ask(rl, 'INBOX_FOLDER_ID', base.INBOX_FOLDER_ID)
+      INBOX_FOLDER_GUID: await ask(rl, 'INBOX_FOLDER_GUID', base.INBOX_FOLDER_GUID)
     };
   } catch {
     return base;

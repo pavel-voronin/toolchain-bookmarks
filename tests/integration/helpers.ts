@@ -156,7 +156,7 @@ export function writeBookmarksFixture(runDir: string, withOpenAi = false): void 
       BOOKMARKS_FILE: './bookmarks.json',
       CDP_HTTP: 'http://127.0.0.1:9222',
       BOOKMARKS_EXTENSION_ID: 'ghiijmlkdknmggljcankolbpdiiaopno',
-      INBOX_FOLDER_ID: '10'
+      INBOX_FOLDER_GUID: 'g10'
     },
     null,
     2

@@ -35,6 +35,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
         parentPath: rootPath,
         parentName: rootName,
         parentFolderId: rootNode.id ?? null,
+        parentFolderGuid: rootNode.guid ?? null,
         index
       });
     });
@@ -47,6 +48,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
       parentPath: string;
       parentName: string;
       parentFolderId: string | null;
+      parentFolderGuid: string | null;
       index: number;
     }
   ): void {
@@ -62,6 +64,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
     if (isLink) {
       out.set(id, {
         id,
+        guid: node.guid ?? null,
         nodeType: 'link',
         title,
         url: node.url ?? null,
@@ -69,6 +72,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
         index,
         path: `${ctx.parentPath}/${title}`,
         folderId: ctx.parentFolderId,
+        folderGuid: ctx.parentFolderGuid,
         folderName: ctx.parentName,
         folderPath: ctx.parentPath
       });
@@ -78,6 +82,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
     const folderPath = `${ctx.parentPath}/${title}`;
     out.set(id, {
       id,
+      guid: node.guid ?? null,
       nodeType: 'folder',
       title,
       url: null,
@@ -85,6 +90,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
       index,
       path: folderPath,
       folderId: node.parentId ?? ctx.parentId,
+      folderGuid: ctx.parentFolderGuid,
       folderName: ctx.parentName,
       folderPath: ctx.parentPath
     });
@@ -96,6 +102,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
         parentPath: folderPath,
         parentName: title,
         parentFolderId: id,
+        parentFolderGuid: node.guid ?? null,
         index: childIndex
       });
     });
@@ -105,5 +112,5 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
 }
 
 export function isInboxNode(node: FlatNode, config: RuntimeConfig): boolean {
-  return Boolean(config.INBOX_FOLDER_ID) && node.folderId === config.INBOX_FOLDER_ID;
+  return Boolean(config.INBOX_FOLDER_GUID) && node.folderGuid === config.INBOX_FOLDER_GUID;
 }

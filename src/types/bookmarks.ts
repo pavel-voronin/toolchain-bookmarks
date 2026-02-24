@@ -1,5 +1,6 @@
 export type BookmarkNode = {
   id?: string;
+  guid?: string;
   parentId?: string;
   index?: number;
   name?: string;
@@ -14,6 +15,7 @@ export type BookmarkNode = {
 
 export type FlatNode = {
   id: string;
+  guid: string | null;
   nodeType: 'folder' | 'link';
   title: string;
   url: string | null;
@@ -21,6 +23,7 @@ export type FlatNode = {
   index: number;
   path: string;
   folderId: string | null;
+  folderGuid: string | null;
   folderName: string | null;
   folderPath: string | null;
 };
