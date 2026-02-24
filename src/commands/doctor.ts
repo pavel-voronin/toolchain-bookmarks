@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { loadConfig, resolvePaths, resolveRuntimeDir } from '../config/runtime';
+import { loadConfig, resolvePaths } from '../config/runtime';
 import { extensionLooksValid } from '../config/assets';
 import { validateBookmarksFile } from '../diff/engine';
 import { listFilesRecursive } from '../utils/fs';
@@ -89,17 +89,14 @@ export async function runDoctor(options: { json?: boolean } = {}): Promise<void>
       : { name: 'systemd.timer', status: 'FAIL', message: 'missing systemd/bookmarks-make-diff.timer' }
   );
 
-  const snapshotsDir = resolveRuntimeDir(paths.cwd, config.SNAPSHOTS_DIR);
-  const diffsDir = resolveRuntimeDir(paths.cwd, config.DIFFS_DIR);
-
   checks.push(
-    fs.existsSync(snapshotsDir)
-      ? { name: 'snapshots', status: 'OK', message: snapshotsDir }
+    fs.existsSync(paths.snapshotsDir)
+      ? { name: 'snapshots', status: 'OK', message: paths.snapshotsDir }
       : { name: 'snapshots', status: 'FAIL', message: 'missing snapshots dir' }
   );
   checks.push(
-    fs.existsSync(diffsDir)
-      ? { name: 'diffs', status: 'OK', message: diffsDir }
+    fs.existsSync(paths.diffsDir)
+      ? { name: 'diffs', status: 'OK', message: paths.diffsDir }
       : { name: 'diffs', status: 'FAIL', message: 'missing diffs dir' }
   );
 

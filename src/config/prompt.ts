@@ -15,6 +15,8 @@ function getPromptIo(): PromptIo | null {
   }
 
   try {
+    const fd = fs.openSync('/dev/tty', 'r+');
+    fs.closeSync(fd);
     const ttyIn = fs.createReadStream('/dev/tty');
     const ttyOut = fs.createWriteStream('/dev/tty');
     return {
@@ -50,11 +52,10 @@ export async function promptConfig(
       BOOKMARKS_FILE: await ask(rl, 'BOOKMARKS_FILE', base.BOOKMARKS_FILE),
       CDP_HTTP: await ask(rl, 'CDP_HTTP', base.CDP_HTTP),
       BOOKMARKS_EXTENSION_ID: await ask(rl, 'BOOKMARKS_EXTENSION_ID', base.BOOKMARKS_EXTENSION_ID),
-      INBOX_FOLDER_ID: await ask(rl, 'INBOX_FOLDER_ID', base.INBOX_FOLDER_ID),
-      INBOX_FOLDER_NAME: await ask(rl, 'INBOX_FOLDER_NAME', base.INBOX_FOLDER_NAME),
-      SNAPSHOTS_DIR: await ask(rl, 'SNAPSHOTS_DIR', base.SNAPSHOTS_DIR),
-      DIFFS_DIR: await ask(rl, 'DIFFS_DIR', base.DIFFS_DIR)
+      INBOX_FOLDER_ID: await ask(rl, 'INBOX_FOLDER_ID', base.INBOX_FOLDER_ID)
     };
+  } catch {
+    return base;
   } finally {
     rl.close();
     promptIo.close();

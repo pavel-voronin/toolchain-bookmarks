@@ -64,7 +64,10 @@ export function runCmd(cmd: string, args: string[], cwd: string, env: NodeJS.Pro
 }
 
 export function runInstall(runDir: string, tarball: string): CmdResult {
-  return runCmd('sh', [path.join(REPO_ROOT, 'install.sh')], runDir, { REPO_TARBALL: tarball });
+  return runCmd('sh', [path.join(REPO_ROOT, 'install.sh')], runDir, {
+    REPO_TARBALL: tarball,
+    BOOKMARKS_INSTALL_SKIP_INIT: '0'
+  });
 }
 
 export function setupInstalledWorkspace(): {
@@ -153,10 +156,7 @@ export function writeBookmarksFixture(runDir: string, withOpenAi = false): void 
       BOOKMARKS_FILE: './bookmarks.json',
       CDP_HTTP: 'http://127.0.0.1:9222',
       BOOKMARKS_EXTENSION_ID: 'ghiijmlkdknmggljcankolbpdiiaopno',
-      INBOX_FOLDER_ID: '10',
-      INBOX_FOLDER_NAME: 'Inbox',
-      SNAPSHOTS_DIR: './snapshots',
-      DIFFS_DIR: './diffs'
+      INBOX_FOLDER_ID: '10'
     },
     null,
     2

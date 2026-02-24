@@ -3,9 +3,6 @@ export type RuntimeConfig = {
   CDP_HTTP: string;
   BOOKMARKS_EXTENSION_ID: string;
   INBOX_FOLDER_ID: string;
-  INBOX_FOLDER_NAME: string;
-  SNAPSHOTS_DIR: string;
-  DIFFS_DIR: string;
 };
 
 export type AppPaths = {

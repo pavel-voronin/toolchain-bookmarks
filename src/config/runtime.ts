@@ -20,11 +20,7 @@ export function resolvePaths(cwd = process.cwd()): AppPaths {
 
 export async function loadConfig(paths: AppPaths): Promise<RuntimeConfig> {
   if (!fs.existsSync(paths.configPath)) {
-    return {
-      ...DEFAULT_CONFIG,
-      SNAPSHOTS_DIR: './snapshots',
-      DIFFS_DIR: './diffs'
-    };
+    return { ...DEFAULT_CONFIG };
   }
 
   const mod = await import(`${paths.configPath}?t=${Date.now()}`);

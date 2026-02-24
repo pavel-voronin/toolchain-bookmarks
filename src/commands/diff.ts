@@ -1,11 +1,10 @@
-import { loadConfig, resolvePaths, resolveRuntimeDir } from '../config/runtime';
+import { resolvePaths } from '../config/runtime';
 import { readNextDiffFromCursor } from '../diff/engine';
 import { printOutput } from '../utils/print';
 
 export async function runDiff(options: { json?: boolean } = {}): Promise<void> {
   const paths = resolvePaths();
-  const config = await loadConfig(paths);
-  const next = readNextDiffFromCursor(paths, resolveRuntimeDir(paths.cwd, config.DIFFS_DIR));
+  const next = readNextDiffFromCursor(paths, paths.diffsDir);
 
   if (!next) {
     printOutput({ ok: true, event: null }, Boolean(options.json), 'no new diff');

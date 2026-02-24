@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { copyExtensionAssets, extensionLooksValid } from '../config/assets';
 import { DEFAULT_CONFIG } from '../config/defaults';
 import { writeSystemdFiles } from '../config/systemd';
-import { loadConfig, renderConfigTs, resolvePaths, resolveRuntimeDir } from '../config/runtime';
+import { loadConfig, renderConfigTs, resolvePaths } from '../config/runtime';
 import { promptConfig } from '../config/prompt';
 import { updateSkill } from '../skill/update';
 import { ensureDir } from '../utils/fs';
@@ -10,8 +10,6 @@ import { printOutput } from '../utils/print';
 import type { RuntimeConfig } from '../types/config';
 
 function isInitialized(config: RuntimeConfig, paths: ReturnType<typeof resolvePaths>): boolean {
-  const snapshotsDir = resolveRuntimeDir(paths.cwd, config.SNAPSHOTS_DIR);
-  const diffsDir = resolveRuntimeDir(paths.cwd, config.DIFFS_DIR);
   return (
     fs.existsSync(paths.configPath) &&
     extensionLooksValid(paths.extensionDir) &&
@@ -20,8 +18,8 @@ function isInitialized(config: RuntimeConfig, paths: ReturnType<typeof resolvePa
     fs.existsSync(paths.requestsDir) &&
     fs.existsSync(`${paths.systemdDir}/bookmarks-make-diff.service`) &&
     fs.existsSync(`${paths.systemdDir}/bookmarks-make-diff.timer`) &&
-    fs.existsSync(snapshotsDir) &&
-    fs.existsSync(diffsDir)
+    fs.existsSync(paths.snapshotsDir) &&
+    fs.existsSync(paths.diffsDir)
   );
 }
 
@@ -36,8 +34,8 @@ export async function runInit(options: { json?: boolean } = {}): Promise<void> {
   }
 
   const config = await promptConfig(current);
-  ensureDir(resolveRuntimeDir(paths.cwd, config.SNAPSHOTS_DIR));
-  ensureDir(resolveRuntimeDir(paths.cwd, config.DIFFS_DIR));
+  ensureDir(paths.snapshotsDir);
+  ensureDir(paths.diffsDir);
   ensureDir(paths.requestsDir);
   ensureDir(paths.extensionDir);
   ensureDir(paths.systemdDir);
@@ -67,8 +65,8 @@ export async function runInit(options: { json?: boolean } = {}): Promise<void> {
       requestsDir: paths.requestsDir,
       systemdDir: paths.systemdDir,
       systemdFiles,
-      snapshotsDir: resolveRuntimeDir(paths.cwd, config.SNAPSHOTS_DIR),
-      diffsDir: resolveRuntimeDir(paths.cwd, config.DIFFS_DIR)
+      snapshotsDir: paths.snapshotsDir,
+      diffsDir: paths.diffsDir
     },
     Boolean(options.json),
     initMessage

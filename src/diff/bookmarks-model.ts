@@ -105,8 +105,5 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
 }
 
 export function isInboxNode(node: FlatNode, config: RuntimeConfig): boolean {
-  if (config.INBOX_FOLDER_ID && node.folderId === config.INBOX_FOLDER_ID) {
-    return true;
-  }
-  return (node.folderName ?? '').toLowerCase() === config.INBOX_FOLDER_NAME.toLowerCase();
+  return Boolean(config.INBOX_FOLDER_ID) && node.folderId === config.INBOX_FOLDER_ID;
 }

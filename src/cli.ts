@@ -154,6 +154,7 @@ process.on("uncaughtException", (error) => {
     message: error.message,
     stack: error.stack
   });
+  process.exit(1);
 });
 
 process.on("unhandledRejection", (reason) => {
@@ -162,6 +163,7 @@ process.on("unhandledRejection", (reason) => {
     message: error.message,
     stack: error.stack
   });
+  process.exit(1);
 });
 
 cli.parse();
