@@ -35,8 +35,10 @@ cd "$SRC_DIR"
 bun install --silent
 bun run build
 
-cp "$SRC_DIR/dist/bookmarks" "$TARGET_DIR/bookmarks"
-chmod +x "$TARGET_DIR/bookmarks"
+NEXT_BIN="$TARGET_DIR/.bookmarks.next.$$"
+cp "$SRC_DIR/dist/bookmarks" "$NEXT_BIN"
+chmod +x "$NEXT_BIN"
+mv -f "$NEXT_BIN" "$TARGET_DIR/bookmarks"
 
 cd "$TARGET_DIR"
 if [ "${BOOKMARKS_INSTALL_SKIP_INIT:-0}" != "1" ]; then
