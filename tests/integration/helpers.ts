@@ -66,7 +66,8 @@ export function runCmd(cmd: string, args: string[], cwd: string, env: NodeJS.Pro
 export function runInstall(runDir: string, tarball: string): CmdResult {
   return runCmd('sh', [path.join(REPO_ROOT, 'install.sh')], runDir, {
     REPO_TARBALL: tarball,
-    BOOKMARKS_INSTALL_SKIP_INIT: '0'
+    BOOKMARKS_INSTALL_SKIP_INIT: '0',
+    BOOKMARKS_INIT_USE_DEFAULTS: '1'
   });
 }
 

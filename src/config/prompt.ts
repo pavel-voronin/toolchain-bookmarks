@@ -41,6 +41,10 @@ async function ask(rl: readline.Interface, label: string, fallback: string): Pro
 export async function promptConfig(
   base: RuntimeConfig
 ): Promise<RuntimeConfig> {
+  if (process.env.BOOKMARKS_INIT_USE_DEFAULTS === '1') {
+    return base;
+  }
+
   const promptIo = getPromptIo();
   if (!promptIo) {
     return base;
