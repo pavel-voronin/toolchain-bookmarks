@@ -46,6 +46,16 @@ export async function runInit(options: { json?: boolean } = {}): Promise<void> {
   const extensionFiles = copyExtensionAssets(paths.extensionDir);
   const skillFiles = updateSkill(paths, config).updatedFiles;
   const systemdFiles = writeSystemdFiles(paths.systemdDir, paths.cwd).files;
+  const initMessage = [
+    'initialized',
+    `config: ${paths.configPath}`,
+    `systemd files: ${paths.systemdDir}`,
+    'install timer:',
+    '  sudo cp ./systemd/bookmarks-make-diff.service /etc/systemd/system/',
+    '  sudo cp ./systemd/bookmarks-make-diff.timer /etc/systemd/system/',
+    '  sudo systemctl daemon-reload',
+    '  sudo systemctl enable --now bookmarks-make-diff.timer'
+  ].join('\n');
 
   printOutput(
     {
@@ -61,6 +71,6 @@ export async function runInit(options: { json?: boolean } = {}): Promise<void> {
       diffsDir: resolveRuntimeDir(paths.cwd, config.DIFFS_DIR)
     },
     Boolean(options.json),
-    'initialized (systemd files generated under ./systemd)'
+    initMessage
   );
 }

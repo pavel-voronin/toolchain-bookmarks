@@ -1,9 +1,33 @@
+import fs from 'node:fs';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import type { RuntimeConfig } from '../types/config';
 
-function hasTty(): boolean {
-  return Boolean(input.isTTY && output.isTTY);
+type PromptIo = {
+  input: NodeJS.ReadableStream;
+  output: NodeJS.WritableStream;
+  close: () => void;
+};
+
+function getPromptIo(): PromptIo | null {
+  if (input.isTTY && output.isTTY) {
+    return { input, output, close: () => undefined };
+  }
+
+  try {
+    const ttyIn = fs.createReadStream('/dev/tty');
+    const ttyOut = fs.createWriteStream('/dev/tty');
+    return {
+      input: ttyIn,
+      output: ttyOut,
+      close: () => {
+        ttyIn.close();
+        ttyOut.end();
+      }
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function ask(rl: readline.Interface, label: string, fallback: string): Promise<string> {
@@ -12,12 +36,15 @@ async function ask(rl: readline.Interface, label: string, fallback: string): Pro
   return answer.length > 0 ? answer : fallback;
 }
 
-export async function promptConfig(base: RuntimeConfig): Promise<RuntimeConfig> {
-  if (!hasTty()) {
+export async function promptConfig(
+  base: RuntimeConfig
+): Promise<RuntimeConfig> {
+  const promptIo = getPromptIo();
+  if (!promptIo) {
     return base;
   }
 
-  const rl = readline.createInterface({ input, output });
+  const rl = readline.createInterface({ input: promptIo.input, output: promptIo.output });
   try {
     return {
       BOOKMARKS_FILE: await ask(rl, 'BOOKMARKS_FILE', base.BOOKMARKS_FILE),
@@ -30,5 +57,6 @@ export async function promptConfig(base: RuntimeConfig): Promise<RuntimeConfig> 
     };
   } finally {
     rl.close();
+    promptIo.close();
   }
 }

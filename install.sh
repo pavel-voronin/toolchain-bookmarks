@@ -41,4 +41,12 @@ chmod +x "$TARGET_DIR/bookmarks"
 cd "$TARGET_DIR"
 if [ "${BOOKMARKS_INSTALL_SKIP_INIT:-0}" != "1" ]; then
   ./bookmarks init
+  echo ""
+  echo "Install completed."
+  echo "Next steps:"
+  echo "1) Install and start systemd timer:"
+  echo "   sudo cp ./systemd/bookmarks-make-diff.service /etc/systemd/system/"
+  echo "   sudo cp ./systemd/bookmarks-make-diff.timer /etc/systemd/system/"
+  echo "   sudo systemctl daemon-reload"
+  echo "   sudo systemctl enable --now bookmarks-make-diff.timer"
 fi
