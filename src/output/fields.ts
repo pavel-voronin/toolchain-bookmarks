@@ -66,7 +66,11 @@ function mapOne(item: unknown, fields: string[]): unknown {
   for (const field of fields) {
     const v = pickByPath(item, field);
     if (v !== undefined) {
-      out[field] = v;
+      if (field === "children" && Array.isArray(v)) {
+        out[field] = v.map((child) => mapOne(child, fields));
+      } else {
+        out[field] = v;
+      }
     }
   }
   return out;
@@ -92,6 +96,31 @@ function mapOneWithMatchCount(
   return { mapped: out, matched };
 }
 
+function mapOneByModel(
+  item: unknown,
+  fields: string[],
+  format: OutputFormat,
+  profile: OutputProfile | undefined,
+): unknown {
+  if (!item || typeof item !== "object") {
+    return item;
+  }
+
+  const out: Record<string, unknown> = {};
+  for (const field of fields) {
+    const v = pickByPath(item, field);
+    if (v === undefined) {
+      continue;
+    }
+    if (field === "children" && Array.isArray(v)) {
+      out[field] = v.map((child) => mapWithBestModelFields(child, format, profile));
+    } else {
+      out[field] = v;
+    }
+  }
+  return out;
+}
+
 function mapWithBestModelFields(
   item: unknown,
   format: OutputFormat,
@@ -99,7 +128,12 @@ function mapWithBestModelFields(
 ): unknown {
   const inferred = inferModel(item);
   if (inferred) {
-    return mapOne(item, resolveModelFields(inferred, format, profile));
+    return mapOneByModel(
+      item,
+      resolveModelFields(inferred, format, profile),
+      format,
+      profile,
+    );
   }
 
   const folderFields = resolveModelFields("folder", format, profile);
@@ -111,7 +145,13 @@ function mapWithBestModelFields(
     return item;
   }
 
-  return folder.matched >= file.matched ? folder.mapped : file.mapped;
+  const selectedModel: ModelKind = folder.matched >= file.matched ? "folder" : "file";
+  return mapOneByModel(
+    item,
+    resolveModelFields(selectedModel, format, profile),
+    format,
+    profile,
+  );
 }
 
 export function parseFields(raw: string | null): string[] {
