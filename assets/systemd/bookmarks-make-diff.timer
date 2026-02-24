@@ -1,0 +1,12 @@
+[Unit]
+Description=Run bookmarks make-diff every 5 seconds
+
+[Timer]
+OnBootSec=5s
+OnUnitActiveSec=5s
+AccuracySec=1s
+Unit=bookmarks-make-diff.service
+
+[Install]
+WantedBy=timers.target
+

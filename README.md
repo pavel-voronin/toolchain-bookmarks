@@ -1,0 +1,123 @@
+# toolchain-bookmarks
+
+TypeScript CLI for Chrome bookmarks, built with `bun`, with runtime initialization and skill lifecycle.
+
+## Requirements
+
+- `bun` must be installed and available in `PATH`
+- Chrome/Chromium with CDP endpoint enabled (default: `http://127.0.0.1:9222`)
+
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/main/install.sh | sh
+```
+
+`install.sh` does:
+
+1. fail-fast check for `bun`
+2. download repository tarball
+3. build `bookmarks`
+4. copy binary into current directory
+5. run `./bookmarks init`
+
+## Commands
+
+- `./bookmarks init`
+- `./bookmarks doctor`
+- `./bookmarks skill-update`
+- `./bookmarks update`
+- `./bookmarks make-diff`
+- `./bookmarks diff`
+- `./bookmarks request <scenario description>`
+
+## Tests
+
+```bash
+bun test
+```
+
+Test layout:
+
+- `tests/integration/install.test.ts` - install flow
+- `tests/integration/commands.test.ts` - command-by-command checks
+
+### Scenarios
+
+- `./bookmarks inbox-links`
+- `./bookmarks search-url <needle>`
+- `./bookmarks search-title <needle>`
+
+### API aliases (simplified)
+
+- `./bookmarks get <id...>`
+- `./bookmarks get-children <id>`
+- `./bookmarks get-recent <n>`
+- `./bookmarks get-sub-tree <id>`
+- `./bookmarks get-tree`
+- `./bookmarks search <query>`
+- `./bookmarks create --parent-id <id> --title <title> [--url <url>] [--index <n>]`
+- `./bookmarks update <id> [--title <title>] [--url <url>]`
+- `./bookmarks move <id> --parent-id <id> [--index <n>]`
+- `./bookmarks remove <id>`
+- `./bookmarks remove-tree <id>`
+- `./bookmarks ping`
+- `./bookmarks methods`
+
+## Runtime layout (current directory)
+
+- `./bookmarks`
+- `./config.ts`
+- `./extension/`
+- `./skills/bookmarks/`
+- `./systemd/`
+- `./snapshots/`
+- `./diffs/`
+- `./state.json`
+- `./requests/`
+
+## Diff cursor
+
+`bookmarks diff` uses internal cursor state in `./state.json`.
+
+- agent repeatedly calls `./bookmarks diff`
+- cursor advances automatically when an event is returned
+
+## Request log
+
+Before any fallback read via `jq`, the agent must run:
+
+```bash
+./bookmarks request "what scenario is missing and why"
+```
+
+Request files are written to `./requests/*.txt`.
+
+## Error log
+
+All command errors are written to:
+
+- `./errors.log`
+
+## Systemd (Ubuntu, every 5 seconds)
+
+`bookmarks init` generates:
+
+- `./systemd/bookmarks-make-diff.service`
+- `./systemd/bookmarks-make-diff.timer`
+
+Install into system:
+
+```bash
+sudo cp ./systemd/bookmarks-make-diff.service /etc/systemd/system/
+sudo cp ./systemd/bookmarks-make-diff.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now bookmarks-make-diff.timer
+```
+
+## Skill placeholders
+
+`skill-update` renders values into `assets/bookmarks/*`:
+
+- `{{BOOKMARKS_BIN}}`
+- `{{BOOKMARKS_FILE}}`
