@@ -1,49 +1,49 @@
-'use strict';
+"use strict";
 
 /**
  * Optional shared secret. If non-empty, every request must include `token`.
  * Keep empty for trusted local-only automation.
  */
-const SHARED_SECRET = '';
+const SHARED_SECRET = "";
 
 const BOOKMARKS_METHODS = new Set([
-  'create',
-  'get',
-  'getChildren',
-  'getRecent',
-  'getSubTree',
-  'getTree',
-  'move',
-  'remove',
-  'removeTree',
-  'search',
-  'update'
+  "create",
+  "get",
+  "getChildren",
+  "getRecent",
+  "getSubTree",
+  "getTree",
+  "move",
+  "remove",
+  "removeTree",
+  "search",
+  "update",
 ]);
 
 function isObject(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function normalizeRequest(payload) {
   if (!isObject(payload)) {
-    throw new Error('Payload must be an object');
+    throw new Error("Payload must be an object");
   }
 
   const id = payload.id ?? null;
   const method = payload.method;
   const args = payload.args ?? [];
-  const token = payload.token ?? '';
+  const token = payload.token ?? "";
 
-  if (typeof method !== 'string' || method.length === 0) {
-    throw new Error('`method` must be a non-empty string');
+  if (typeof method !== "string" || method.length === 0) {
+    throw new Error("`method` must be a non-empty string");
   }
 
   if (!Array.isArray(args)) {
-    throw new Error('`args` must be an array');
+    throw new Error("`args` must be an array");
   }
 
   if (SHARED_SECRET && token !== SHARED_SECRET) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   return { id, method, args };
@@ -57,11 +57,11 @@ function errorToMessage(error) {
 }
 
 async function invokeBookmarksMethod(method, args) {
-  if (method === '__ping') {
-    return { ok: true, service: 'bookmarks-bridge' };
+  if (method === "__ping") {
+    return { ok: true, service: "bookmarks-bridge" };
   }
 
-  if (method === '__methods') {
+  if (method === "__methods") {
     return Array.from(BOOKMARKS_METHODS.values()).sort();
   }
 
@@ -70,7 +70,7 @@ async function invokeBookmarksMethod(method, args) {
   }
 
   const fn = chrome.bookmarks?.[method];
-  if (typeof fn !== 'function') {
+  if (typeof fn !== "function") {
     throw new Error(`chrome.bookmarks.${method} is not available`);
   }
 
@@ -118,7 +118,7 @@ function createMessageHandler(source) {
         console.error(`[${source}] request failed`, {
           method: request.method,
           sender,
-          error
+          error,
         });
         sendResponse(buildErrorResponse(request.id, error));
       });
@@ -127,7 +127,7 @@ function createMessageHandler(source) {
   };
 }
 
-chrome.runtime.onMessage.addListener(createMessageHandler('internal'));
-chrome.runtime.onMessageExternal.addListener(createMessageHandler('external'));
+chrome.runtime.onMessage.addListener(createMessageHandler("internal"));
+chrome.runtime.onMessageExternal.addListener(createMessageHandler("external"));
 
-console.log('Bookmarks API bridge service worker loaded');
+console.log("Bookmarks API bridge service worker loaded");

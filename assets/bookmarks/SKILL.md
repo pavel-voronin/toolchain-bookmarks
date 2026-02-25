@@ -26,9 +26,7 @@ Run all commands below as: `{{BOOKMARKS_BIN}} <command> [args]`.
 
 Scenarios:
 
-- `inbox-links` - List links from configured inbox folder.
-- `search-url <needle>` - Find links by URL substring.
-- `search-title <needle>` - Find links by title substring.
+- `inbox-links` - Get configured inbox subtree.
 
 API:
 

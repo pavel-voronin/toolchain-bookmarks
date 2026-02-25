@@ -1,16 +1,16 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 export function ensureDir(dirPath: string): void {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
 export function readJsonFile<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
 }
 
 export function writeJsonFile(filePath: string, value: unknown): void {
-  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
 export function listFilesRecursive(dirPath: string): string[] {

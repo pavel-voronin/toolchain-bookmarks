@@ -1,23 +1,23 @@
-import fs from 'node:fs';
-import type { BookmarkNode, FlatNode } from '../types/bookmarks';
-import type { RuntimeConfig } from '../types/config';
+import fs from "node:fs";
+import type { BookmarkNode, FlatNode } from "../types/bookmarks";
+import type { RuntimeConfig } from "../types/config";
 
 const ROOT_NAMES: Record<string, string> = {
-  bookmark_bar: 'Bookmarks Bar',
-  other: 'Other Bookmarks',
-  synced: 'Mobile Bookmarks'
+  bookmark_bar: "Bookmarks Bar",
+  other: "Other Bookmarks",
+  synced: "Mobile Bookmarks",
 };
 
 function getRoots(input: unknown): Record<string, BookmarkNode> {
   const roots = (input as { roots?: Record<string, BookmarkNode> }).roots;
-  if (!roots || typeof roots !== 'object') {
-    throw new Error('Bookmarks file has no roots');
+  if (!roots || typeof roots !== "object") {
+    throw new Error("Bookmarks file has no roots");
   }
   return roots;
 }
 
 export function readBookmarksJson(config: RuntimeConfig): unknown {
-  return JSON.parse(fs.readFileSync(config.BOOKMARKS_FILE, 'utf8'));
+  return JSON.parse(fs.readFileSync(config.BOOKMARKS_FILE, "utf8"));
 }
 
 export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
@@ -25,7 +25,8 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
   const out = new Map<string, FlatNode>();
 
   for (const [rootKey, rootNode] of Object.entries(roots)) {
-    const rootTitle = ROOT_NAMES[rootKey] ?? rootNode.name ?? rootNode.title ?? rootKey;
+    const rootTitle =
+      ROOT_NAMES[rootKey] ?? rootNode.name ?? rootNode.title ?? rootKey;
     const rootPath = `/${rootTitle}`;
     const children = Array.isArray(rootNode.children) ? rootNode.children : [];
 
@@ -35,7 +36,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
         parentPath: rootPath,
         parentTitle: rootTitle,
         parentFolderId: rootNode.id ?? null,
-        index
+        index,
       });
     });
   }
@@ -48,21 +49,23 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
       parentTitle: string;
       parentFolderId: string | null;
       index: number;
-    }
+    },
   ): void {
     if (!node.id) {
       return;
     }
 
     const id = node.id;
-    const title = node.name ?? node.title ?? '';
-    const index = Number.isInteger(node.index) ? (node.index as number) : ctx.index;
-    const isLink = typeof node.url === 'string' && node.url.length > 0;
+    const title = node.name ?? node.title ?? "";
+    const index = Number.isInteger(node.index)
+      ? (node.index as number)
+      : ctx.index;
+    const isLink = typeof node.url === "string" && node.url.length > 0;
 
     if (isLink) {
       out.set(id, {
         id,
-        type: 'link',
+        type: "link",
         title,
         url: node.url ?? null,
         parentId: node.parentId ?? ctx.parentId,
@@ -70,7 +73,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
         path: `${ctx.parentPath}/${title}`,
         folderId: ctx.parentFolderId,
         folderTitle: ctx.parentTitle,
-        folderPath: ctx.parentPath
+        folderPath: ctx.parentPath,
       });
       return;
     }
@@ -78,7 +81,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
     const folderPath = `${ctx.parentPath}/${title}`;
     out.set(id, {
       id,
-      type: 'folder',
+      type: "folder",
       title,
       url: null,
       parentId: node.parentId ?? ctx.parentId,
@@ -86,7 +89,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
       path: folderPath,
       folderId: node.parentId ?? ctx.parentId,
       folderTitle: ctx.parentTitle,
-      folderPath: ctx.parentPath
+      folderPath: ctx.parentPath,
     });
 
     const children = Array.isArray(node.children) ? node.children : [];
@@ -96,7 +99,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
         parentPath: folderPath,
         parentTitle: title,
         parentFolderId: id,
-        index: childIndex
+        index: childIndex,
       });
     });
   }
@@ -105,5 +108,7 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
 }
 
 export function isInboxNode(node: FlatNode, config: RuntimeConfig): boolean {
-  return Boolean(config.INBOX_FOLDER_ID) && node.folderId === config.INBOX_FOLDER_ID;
+  return (
+    Boolean(config.INBOX_FOLDER_ID) && node.folderId === config.INBOX_FOLDER_ID
+  );
 }

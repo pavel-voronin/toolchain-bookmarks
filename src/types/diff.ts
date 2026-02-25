@@ -1,7 +1,7 @@
 export type DiffEvent = {
-  type: 'link_created_in_inbox' | 'link_created_anywhere' | 'node_moved';
+  type: "link_created_in_inbox" | "link_created_anywhere" | "node_moved";
   id: string;
-  nodeType: 'folder' | 'link';
+  nodeType: "folder" | "link";
   url: string | null;
   title: string;
   path: string;

@@ -1,9 +1,11 @@
-import {
-  MODEL_FIELD_DEFAULTS,
-  type ModelKind,
-  type OutputFormat,
-  type OutputProfile,
-} from "./profiles";
+import type { CanonicalBookmarkNode } from "../types/canonical";
+
+type ModelKind = CanonicalBookmarkNode["type"];
+
+const MODEL_FIELD_DEFAULTS: Record<ModelKind, string[]> = {
+  folder: ["id", "title", "type", "path", "parentId", "index"],
+  link: ["id", "title", "type", "url", "path", "parentId", "index"],
+};
 
 function pickByPath(obj: unknown, path: string): unknown {
   if (!obj || typeof obj !== "object") {
@@ -21,40 +23,8 @@ function pickByPath(obj: unknown, path: string): unknown {
   return current;
 }
 
-function inferModel(item: unknown): ModelKind | null {
-  if (!item || typeof item !== "object") {
-    return null;
-  }
-
-  const obj = item as Record<string, unknown>;
-  const nodeType = obj.nodeType;
-  const type = obj.type;
-
-  if (nodeType === "folder" || type === "folder") {
-    return "folder";
-  }
-  if (nodeType === "link" || type === "link" || type === "url") {
-    return "link";
-  }
-
-  if (typeof obj.url === "string" && obj.url.length > 0) {
-    return "link";
-  }
-  if (Array.isArray(obj.children)) {
-    return "folder";
-  }
-
-  return null;
-}
-
-function resolveModelFields(
-  model: ModelKind,
-  format: OutputFormat,
-  profile: OutputProfile | undefined,
-): string[] {
-  const base = MODEL_FIELD_DEFAULTS[model][format];
-  const override = profile?.modelOverrides?.[model]?.[format];
-  return override ?? base;
+function resolveModelFields(model: ModelKind): string[] {
+  return MODEL_FIELD_DEFAULTS[model];
 }
 
 function mapOne(item: unknown, fields: string[]): unknown {
@@ -76,36 +46,7 @@ function mapOne(item: unknown, fields: string[]): unknown {
   return out;
 }
 
-function mapOneWithMatchCount(
-  item: unknown,
-  fields: string[],
-): { mapped: unknown; matched: number } {
-  if (!item || typeof item !== "object") {
-    return { mapped: item, matched: 0 };
-  }
-
-  const out: Record<string, unknown> = {};
-  let matched = 0;
-  for (const field of fields) {
-    const v = pickByPath(item, field);
-    if (v !== undefined) {
-      out[field] = v;
-      matched += 1;
-    }
-  }
-  return { mapped: out, matched };
-}
-
-function mapOneByModel(
-  item: unknown,
-  fields: string[],
-  format: OutputFormat,
-  profile: OutputProfile | undefined,
-): unknown {
-  if (!item || typeof item !== "object") {
-    return item;
-  }
-
+function mapOneByModel(item: CanonicalBookmarkNode, fields: string[]): unknown {
   const out: Record<string, unknown> = {};
   for (const field of fields) {
     const v = pickByPath(item, field);
@@ -113,7 +54,9 @@ function mapOneByModel(
       continue;
     }
     if (field === "children" && Array.isArray(v)) {
-      out[field] = v.map((child) => mapWithBestModelFields(child, format, profile));
+      out[field] = v.map((child) =>
+        mapWithModelDefaults(child as CanonicalBookmarkNode),
+      );
     } else {
       out[field] = v;
     }
@@ -121,37 +64,8 @@ function mapOneByModel(
   return out;
 }
 
-function mapWithBestModelFields(
-  item: unknown,
-  format: OutputFormat,
-  profile: OutputProfile | undefined,
-): unknown {
-  const inferred = inferModel(item);
-  if (inferred) {
-    return mapOneByModel(
-      item,
-      resolveModelFields(inferred, format, profile),
-      format,
-      profile,
-    );
-  }
-
-  const folderFields = resolveModelFields("folder", format, profile);
-  const fileFields = resolveModelFields("link", format, profile);
-  const folder = mapOneWithMatchCount(item, folderFields);
-  const file = mapOneWithMatchCount(item, fileFields);
-
-  if (folder.matched === 0 && file.matched === 0) {
-    return item;
-  }
-
-  const selectedModel: ModelKind = folder.matched >= file.matched ? "folder" : "link";
-  return mapOneByModel(
-    item,
-    resolveModelFields(selectedModel, format, profile),
-    format,
-    profile,
-  );
+function mapWithModelDefaults(item: CanonicalBookmarkNode): unknown {
+  return mapOneByModel(item, resolveModelFields(item.type));
 }
 
 export function parseFields(raw: string | null): string[] {
@@ -174,12 +88,10 @@ export function applyFields(value: unknown, fields: string[]): unknown {
 }
 
 export function applyModelDefaults(
-  value: unknown,
-  format: OutputFormat,
-  profile?: OutputProfile,
+  value: CanonicalBookmarkNode | CanonicalBookmarkNode[],
 ): unknown {
   if (Array.isArray(value)) {
-    return value.map((item) => mapWithBestModelFields(item, format, profile));
+    return value.map((item) => mapWithModelDefaults(item));
   }
-  return mapWithBestModelFields(value, format, profile);
+  return mapWithModelDefaults(value);
 }

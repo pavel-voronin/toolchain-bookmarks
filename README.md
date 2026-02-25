@@ -46,8 +46,6 @@ bun test
 ### Scenarios
 
 - `./bookmarks inbox-links`
-- `./bookmarks search-url <needle>`
-- `./bookmarks search-title <needle>`
 
 ### API aliases (simplified)
 

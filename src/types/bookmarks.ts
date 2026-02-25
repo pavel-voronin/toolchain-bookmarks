@@ -14,7 +14,7 @@ export type BookmarkNode = {
 
 export type FlatNode = {
   id: string;
-  type: 'folder' | 'link';
+  type: "folder" | "link";
   title: string;
   url: string | null;
   parentId: string | null;

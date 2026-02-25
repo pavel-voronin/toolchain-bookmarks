@@ -8,10 +8,7 @@
     "service_worker": "background.js"
   },
   "externally_connectable": {
-    "matches": [
-      "http://127.0.0.1/*",
-      "https://example.com/*"
-    ]
+    "matches": ["http://127.0.0.1/*", "https://example.com/*"]
   },
   "web_accessible_resources": [
     {

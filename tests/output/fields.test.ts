@@ -1,65 +1,62 @@
-import { describe, expect, test } from 'bun:test';
-import { applyFields, applyModelDefaults } from '../../src/output/fields';
-import { API_OUTPUT_PROFILES } from '../../src/output/profiles';
+import { describe, expect, test } from "bun:test";
+import { applyFields, applyModelDefaults } from "../../src/output/fields";
+import type { CanonicalBookmarkNode } from "../../src/types/canonical";
 
-describe('output fields', () => {
-  test('applyFields filters nested children recursively', () => {
+describe("output fields", () => {
+  test("applyFields filters nested children recursively", () => {
     const input = {
-      id: '795',
+      id: "795",
       children: [
         {
-          id: '796',
-          title: 'Your Repositories',
-          url: 'https://github.com/pavel-voronin?tab=repositories',
+          id: "796",
+          title: "Your Repositories",
+          url: "https://github.com/pavel-voronin?tab=repositories",
           index: 0,
-          parentId: '795',
+          parentId: "795",
         },
       ],
     };
 
-    const out = applyFields(input, ['id', 'children']) as {
+    const out = applyFields(input, ["id", "children"]) as {
       id: string;
       children: Array<Record<string, unknown>>;
     };
 
-    expect(out.id).toBe('795');
+    expect(out.id).toBe("795");
     expect(out.children.length).toBe(1);
-    expect(out.children[0]).toEqual({ id: '796' });
+    expect(out.children[0]).toEqual({ id: "796" });
   });
 
-  test('applyModelDefaults applies profile recursively for subtree children', () => {
-    const input = {
-      id: '795',
-      title: 'Folder',
-      type: 'folder',
+  test("applyModelDefaults applies defaults recursively for subtree children", () => {
+    const input: CanonicalBookmarkNode = {
+      id: "795",
+      title: "Folder",
+      type: "folder",
       children: [
         {
-          id: '796',
-          title: 'Your Repositories',
-          type: 'link',
-          url: 'https://github.com/pavel-voronin?tab=repositories',
+          id: "796",
+          title: "Your Repositories",
+          type: "link",
+          url: "https://github.com/pavel-voronin?tab=repositories",
           index: 0,
-          parentId: '795',
+          parentId: "795",
         },
       ],
     };
 
-    const out = applyModelDefaults(input, 'yaml', API_OUTPUT_PROFILES['get-sub-tree']) as {
+    const out = applyModelDefaults(input) as {
       id: string;
       title: string;
-      children: Array<Record<string, unknown>>;
+      type: string;
+      path?: string;
+      parentId?: string;
+      index?: number;
+      children?: Array<Record<string, unknown>>;
     };
 
-    expect(out.id).toBe('795');
-    expect(out.title).toBe('Folder');
-    expect(out.children.length).toBe(1);
-    expect(out.children[0]).toEqual({
-      id: '796',
-      title: 'Your Repositories',
-      type: 'link',
-      url: 'https://github.com/pavel-voronin?tab=repositories',
-    });
-    expect('index' in out.children[0]).toBe(false);
-    expect('parentId' in out.children[0]).toBe(false);
+    expect(out.id).toBe("795");
+    expect(out.title).toBe("Folder");
+    expect(out.type).toBe("folder");
+    expect(out.children).toBeUndefined();
   });
 });

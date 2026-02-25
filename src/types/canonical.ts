@@ -9,25 +9,46 @@ export type CanonicalNodeBase = {
 };
 
 export type CanonicalFolderNode = CanonicalNodeBase & {
-  type: 'folder';
+  type: "folder";
   children?: CanonicalBookmarkNode[];
   dateGroupModified?: number;
-  folderType?: 'bookmarks-bar' | 'other' | 'mobile' | 'managed';
-  unmodifiable?: 'managed';
+  folderType?: "bookmarks-bar" | "other" | "mobile" | "managed";
+  unmodifiable?: "managed";
 };
 
 export type CanonicalLinkNode = CanonicalNodeBase & {
-  type: 'link';
+  type: "link";
   url: string;
   dateLastUsed?: number;
 };
 
 export type CanonicalBookmarkNode = CanonicalFolderNode | CanonicalLinkNode;
 
-export function isCanonicalFolderNode(node: CanonicalBookmarkNode): node is CanonicalFolderNode {
-  return node.type === 'folder';
-}
+export function isCanonicalBookmarkNode(
+  value: unknown,
+): value is CanonicalBookmarkNode {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
 
-export function isCanonicalLinkNode(node: CanonicalBookmarkNode): node is CanonicalLinkNode {
-  return node.type === 'link';
+  const node = value as Record<string, unknown>;
+  if (typeof node.id !== "string" || typeof node.title !== "string") {
+    return false;
+  }
+
+  if (node.type === "link") {
+    return typeof node.url === "string";
+  }
+
+  if (node.type === "folder") {
+    if (node.children === undefined) {
+      return true;
+    }
+    if (!Array.isArray(node.children)) {
+      return false;
+    }
+    return node.children.every((child) => isCanonicalBookmarkNode(child));
+  }
+
+  return false;
 }

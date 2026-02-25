@@ -1,6 +1,10 @@
-import { logCommandError } from './errors';
+import { logCommandError } from "./errors";
 
-export function printOutput(payload: unknown, json: boolean, text: string): void {
+export function printOutput(
+  payload: unknown,
+  json: boolean,
+  text: string,
+): void {
   if (json) {
     process.stdout.write(`${JSON.stringify(payload)}\n`);
     return;
