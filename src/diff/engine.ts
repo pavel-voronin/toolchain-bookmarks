@@ -62,30 +62,36 @@ function buildEvents(prev: Map<string, FlatNode>, curr: Map<string, FlatNode>, c
   const events: DiffEvent[] = [];
 
   for (const [id, node] of curr) {
-    if (node.nodeType !== 'link' || prev.has(id)) {
+    if (node.type !== 'link' || prev.has(id)) {
       continue;
     }
     if (isInboxNode(node, config)) {
       events.push({
         type: 'link_created_in_inbox',
-        bookmark_id: id,
-        node_type: 'link',
+        id,
+        nodeType: 'link',
         url: node.url,
         title: node.title,
-        folder_id: node.folderId,
-        folder_name: node.folderName,
-        folder_path: node.folderPath
+        path: node.path,
+        parentId: node.parentId,
+        index: node.index,
+        folderId: node.folderId,
+        folderTitle: node.folderTitle,
+        folderPath: node.folderPath
       });
     }
     events.push({
       type: 'link_created_anywhere',
-      bookmark_id: id,
-      node_type: 'link',
+      id,
+      nodeType: 'link',
       url: node.url,
       title: node.title,
-      folder_id: node.folderId,
-      folder_name: node.folderName,
-      folder_path: node.folderPath
+      path: node.path,
+      parentId: node.parentId,
+      index: node.index,
+      folderId: node.folderId,
+      folderTitle: node.folderTitle,
+      folderPath: node.folderPath
     });
   }
 
@@ -99,19 +105,22 @@ function buildEvents(prev: Map<string, FlatNode>, curr: Map<string, FlatNode>, c
     }
     events.push({
       type: 'node_moved',
-      bookmark_id: id,
-      node_type: node.nodeType,
+      id,
+      nodeType: node.type,
       url: node.url,
       title: node.title,
-      folder_id: node.folderId,
-      folder_name: node.folderName,
-      folder_path: node.folderPath,
-      old_parent_id: old.parentId,
-      new_parent_id: node.parentId,
-      old_index: old.index,
-      new_index: node.index,
-      old_path: old.path,
-      new_path: node.path
+      path: node.path,
+      parentId: node.parentId,
+      index: node.index,
+      folderId: node.folderId,
+      folderTitle: node.folderTitle,
+      folderPath: node.folderPath,
+      oldParentId: old.parentId,
+      newParentId: node.parentId,
+      oldIndex: old.index,
+      newIndex: node.index,
+      oldPath: old.path,
+      newPath: node.path
     });
   }
 

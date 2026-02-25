@@ -1,5 +1,5 @@
-export type ModelKind = "folder" | "file";
-export type OutputFormat = "yaml" | "json";
+export type ModelKind = 'folder' | 'link';
+export type OutputFormat = 'yaml' | 'json';
 
 type ModelFieldSet = {
   yaml: string[];
@@ -12,116 +12,93 @@ export type OutputProfile = {
 
 export const MODEL_FIELD_DEFAULTS: Record<ModelKind, ModelFieldSet> = {
   folder: {
-    yaml: ["id", "guid", "title", "name", "parentId", "index"],
+    yaml: ['id', 'title', 'type', 'path', 'parentId', 'index'],
     json: [
-      "id",
-      "guid",
-      "title",
-      "name",
-      "parentId",
-      "index",
-      "children",
-      "dateAdded",
-      "dateGroupModified",
-    ],
+      'id',
+      'title',
+      'type',
+      'path',
+      'parentId',
+      'index',
+      'children',
+      'dateAdded',
+      'dateGroupModified',
+      'folderType',
+      'syncing',
+      'unmodifiable'
+    ]
   },
-  file: {
-    yaml: ["id", "guid", "title", "name", "url", "parentId", "index"],
+  link: {
+    yaml: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index'],
     json: [
-      "id",
-      "guid",
-      "title",
-      "name",
-      "url",
-      "parentId",
-      "index",
-      "dateAdded",
-      "dateGroupModified",
-    ],
-  },
+      'id',
+      'title',
+      'type',
+      'url',
+      'path',
+      'parentId',
+      'index',
+      'dateAdded',
+      'dateLastUsed',
+      'syncing'
+    ]
+  }
 };
 
 export const SCENARIO_OUTPUT_PROFILES: Record<string, OutputProfile> = {
-  "inbox-links": {
+  'inbox-links': {
     modelOverrides: {
-      file: {
-        yaml: ["id", "guid", "title", "url", "folderGuid", "folderPath"],
-        json: [
-          "id",
-          "guid",
-          "title",
-          "url",
-          "folderGuid",
-          "folderPath",
-          "parentId",
-          "index",
-        ],
-      },
-    },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index'],
+        json: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index', 'dateAdded']
+      }
+    }
   },
-  "search-url": {
+  'search-url': {
     modelOverrides: {
-      file: {
-        yaml: ["id", "guid", "title", "url", "folderGuid", "folderPath"],
-        json: [
-          "id",
-          "guid",
-          "title",
-          "url",
-          "folderGuid",
-          "folderPath",
-          "parentId",
-          "index",
-        ],
-      },
-    },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path'],
+        json: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index']
+      }
+    }
   },
-  "search-title": {
+  'search-title': {
     modelOverrides: {
-      file: {
-        yaml: ["id", "guid", "title", "url", "folderGuid", "folderPath"],
-        json: [
-          "id",
-          "guid",
-          "title",
-          "url",
-          "folderGuid",
-          "folderPath",
-          "parentId",
-          "index",
-        ],
-      },
-    },
-  },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path'],
+        json: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index']
+      }
+    }
+  }
 };
 
 export const API_OUTPUT_PROFILES: Record<string, OutputProfile> = {
   get: {},
-  "get-children": {},
-  "get-recent": {},
-  "get-sub-tree": {
+  'get-children': {},
+  'get-recent': {},
+  'get-sub-tree': {
     modelOverrides: {
       folder: {
-        yaml: ["id", "guid", "title", "name", "children"],
-        json: ["id", "guid", "title", "name", "children", "parentId", "index"],
+        yaml: ['id', 'title', 'type', 'path', 'children'],
+        json: ['id', 'title', 'type', 'path', 'children', 'parentId', 'index']
       },
-      file: {
-        yaml: ["id", "guid", "title", "name", "url"],
-        json: ["id", "guid", "title", "name", "url", "parentId", "index"],
-      },
-    },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path'],
+        json: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index']
+      }
+    }
   },
-  "get-tree": {
+  'get-tree': {
     modelOverrides: {
       folder: {
-        yaml: ["id", "guid", "title", "name", "children"],
-        json: ["id", "guid", "title", "name", "children", "parentId", "index"],
+        yaml: ['id', 'title', 'type', 'path', 'children'],
+        json: ['id', 'title', 'type', 'path', 'children', 'parentId', 'index']
       },
-      file: {
-        yaml: ["id", "guid", "title", "name", "url"],
-        json: ["id", "guid", "title", "name", "url", "parentId", "index"],
-      },
-    },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path'],
+        json: ['id', 'title', 'type', 'url', 'path', 'parentId', 'index']
+      }
+    }
   },
   search: {},
   create: {},
@@ -130,27 +107,27 @@ export const API_OUTPUT_PROFILES: Record<string, OutputProfile> = {
   remove: {
     modelOverrides: {
       folder: {
-        yaml: ["id", "guid", "title", "name"],
-        json: ["id", "guid", "title", "name"],
+        yaml: ['id', 'title', 'type', 'path'],
+        json: ['id', 'title', 'type', 'path']
       },
-      file: {
-        yaml: ["id", "guid", "title", "url"],
-        json: ["id", "guid", "title", "url"],
-      },
-    },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path'],
+        json: ['id', 'title', 'type', 'url', 'path']
+      }
+    }
   },
-  "remove-tree": {
+  'remove-tree': {
     modelOverrides: {
       folder: {
-        yaml: ["id", "guid", "title", "name"],
-        json: ["id", "guid", "title", "name"],
+        yaml: ['id', 'title', 'type', 'path'],
+        json: ['id', 'title', 'type', 'path']
       },
-      file: {
-        yaml: ["id", "guid", "title", "url"],
-        json: ["id", "guid", "title", "url"],
-      },
-    },
+      link: {
+        yaml: ['id', 'title', 'type', 'url', 'path'],
+        json: ['id', 'title', 'type', 'url', 'path']
+      }
+    }
   },
   ping: {},
-  methods: {},
+  methods: {}
 };

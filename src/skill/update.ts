@@ -5,10 +5,9 @@ import { loadSkillTemplateFiles } from './template';
 import { ensureDir, rmDirContents } from '../utils/fs';
 import type { AppPaths, RuntimeConfig } from '../types/config';
 
-function applyPlaceholders(input: string, config: RuntimeConfig, cwd: string): string {
+function applyPlaceholders(input: string, cwd: string): string {
   const mapping: Record<string, string> = {
-    BOOKMARKS_BIN: path.join(cwd, 'bookmarks'),
-    BOOKMARKS_FILE: config.BOOKMARKS_FILE
+    BOOKMARKS_BIN: path.join(cwd, 'bookmarks')
   };
 
   for (const key of REQUIRED_SKILL_KEYS) {
@@ -28,7 +27,7 @@ export function updateSkill(paths: AppPaths, config: RuntimeConfig): { updatedFi
   for (const file of files) {
     const target = path.join(paths.skillDir, file.relativePath);
     ensureDir(path.dirname(target));
-    fs.writeFileSync(target, applyPlaceholders(file.content, config, paths.cwd), 'utf8');
+    fs.writeFileSync(target, applyPlaceholders(file.content, paths.cwd), 'utf8');
   }
 
   return { updatedFiles: files.length };

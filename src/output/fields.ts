@@ -33,12 +33,12 @@ function inferModel(item: unknown): ModelKind | null {
   if (nodeType === "folder" || type === "folder") {
     return "folder";
   }
-  if (nodeType === "link" || type === "url") {
-    return "file";
+  if (nodeType === "link" || type === "link" || type === "url") {
+    return "link";
   }
 
   if (typeof obj.url === "string" && obj.url.length > 0) {
-    return "file";
+    return "link";
   }
   if (Array.isArray(obj.children)) {
     return "folder";
@@ -137,7 +137,7 @@ function mapWithBestModelFields(
   }
 
   const folderFields = resolveModelFields("folder", format, profile);
-  const fileFields = resolveModelFields("file", format, profile);
+  const fileFields = resolveModelFields("link", format, profile);
   const folder = mapOneWithMatchCount(item, folderFields);
   const file = mapOneWithMatchCount(item, fileFields);
 
@@ -145,7 +145,7 @@ function mapWithBestModelFields(
     return item;
   }
 
-  const selectedModel: ModelKind = folder.matched >= file.matched ? "folder" : "file";
+  const selectedModel: ModelKind = folder.matched >= file.matched ? "folder" : "link";
   return mapOneByModel(
     item,
     resolveModelFields(selectedModel, format, profile),

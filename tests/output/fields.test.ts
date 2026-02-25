@@ -31,10 +31,12 @@ describe('output fields', () => {
     const input = {
       id: '795',
       title: 'Folder',
+      type: 'folder',
       children: [
         {
           id: '796',
           title: 'Your Repositories',
+          type: 'link',
           url: 'https://github.com/pavel-voronin?tab=repositories',
           index: 0,
           parentId: '795',
@@ -54,6 +56,7 @@ describe('output fields', () => {
     expect(out.children[0]).toEqual({
       id: '796',
       title: 'Your Repositories',
+      type: 'link',
       url: 'https://github.com/pavel-voronin?tab=repositories',
     });
     expect('index' in out.children[0]).toBe(false);

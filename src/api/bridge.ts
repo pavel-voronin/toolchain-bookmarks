@@ -1,4 +1,5 @@
 import type { RuntimeConfig } from '../types/config';
+import { callMockBookmarksApi } from './mock';
 
 const API_METHODS = new Set([
   'create',
@@ -165,6 +166,11 @@ export async function callBookmarksApi(
   method: string,
   args: unknown[]
 ): Promise<unknown> {
+  const mockFile = process.env.BOOKMARKS_API_MOCK_FILE;
+  if (mockFile && mockFile.trim().length > 0) {
+    return callMockBookmarksApi(method, args, mockFile);
+  }
+
   if (!API_METHODS.has(method)) {
     throw new Error(`Unsupported API method: ${method}`);
   }

@@ -18,6 +18,7 @@ import {
   callBookmarksApi,
   hasApiCommand,
 } from "./api/bridge";
+import { buildPathIndexFromTree, toCanonicalWithPathIndex } from "./api/canonical";
 import { parseApiArgs } from "./api/args";
 import { loadConfig, resolvePaths } from "./config/runtime";
 import { applyFields, applyModelDefaults, parseFields } from "./output/fields";
@@ -28,6 +29,61 @@ import {
 import { renderHumanYaml } from "./output/render";
 import { logCommandError } from "./utils/errors";
 import { fail, printOutput } from "./utils/print";
+
+async function hydrateGetWithSubTree(config: unknown, result: unknown): Promise<unknown> {
+  if (!Array.isArray(result)) {
+    return result;
+  }
+
+  const hydrated = await Promise.all(
+    result.map(async (item) => {
+      if (!item || typeof item !== "object") {
+        return item;
+      }
+
+      const id = (item as Record<string, unknown>).id;
+      if (typeof id !== "string" || id.length === 0) {
+        return item;
+      }
+
+      try {
+        const subtree = await callBookmarksApi(
+          config as Parameters<typeof callBookmarksApi>[0],
+          "getSubTree",
+          [id],
+        );
+        if (Array.isArray(subtree) && subtree.length > 0) {
+          return subtree[0];
+        }
+      } catch {
+        return item;
+      }
+
+      return item;
+    }),
+  );
+
+  return hydrated;
+}
+
+function isNodeReturningApiMethod(method: string): boolean {
+  return !["__ping", "__methods", "remove", "removeTree"].includes(method);
+}
+
+async function canonicalizeApiResult(
+  config: Awaited<ReturnType<typeof loadConfig>>,
+  method: string,
+  apiResult: unknown,
+): Promise<unknown> {
+  if (!isNodeReturningApiMethod(method)) {
+    return apiResult;
+  }
+
+  const treePayload =
+    method === "getTree" ? apiResult : await callBookmarksApi(config, "getTree", []);
+  const pathIndex = buildPathIndexFromTree(treePayload);
+  return toCanonicalWithPathIndex(apiResult, pathIndex);
+}
 
 const cli = cac("bookmarks");
 
@@ -170,7 +226,7 @@ cli.on("command:*", async () => {
 
   if (hasScenario(command)) {
     const config = await loadConfig(resolvePaths());
-    const result = scenarioRegistry[command](config, argv);
+    const result = await scenarioRegistry[command](config, argv);
     const fields = parseFields(fieldsRaw) || [];
     const profile = SCENARIO_OUTPUT_PROFILES[command];
     const picked =
@@ -183,11 +239,14 @@ cli.on("command:*", async () => {
 
   if (hasApiCommand(command)) {
     const config = await loadConfig(resolvePaths());
-    const result = await callBookmarksApi(
+    const apiResult = await callBookmarksApi(
       config,
       aliasToMethod(command),
       parseApiArgs(command, argv),
     );
+    const rawResult =
+      command === "get" ? await hydrateGetWithSubTree(config, apiResult) : apiResult;
+    const result = await canonicalizeApiResult(config, aliasToMethod(command), rawResult);
     const fields = parseFields(fieldsRaw) || [];
     const profile = API_OUTPUT_PROFILES[command];
     const picked =

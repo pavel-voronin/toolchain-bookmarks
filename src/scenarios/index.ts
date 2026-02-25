@@ -4,6 +4,7 @@ import { runSearchTitle } from './search-title';
 import { runSearchUrl } from './search-url';
 
 export type ScenarioRunner = (config: RuntimeConfig, argv: string[]) => unknown;
+export type ScenarioRunnerAsync = (config: RuntimeConfig, argv: string[]) => Promise<unknown>;
 
 export const SCENARIOS = [
   { name: 'inbox-links', description: 'List links in Inbox folder' },
@@ -11,7 +12,7 @@ export const SCENARIOS = [
   { name: 'search-title', description: 'Find links by title substring' }
 ] as const;
 
-export const scenarioRegistry: Record<string, ScenarioRunner> = {
+export const scenarioRegistry: Record<string, ScenarioRunner | ScenarioRunnerAsync> = {
   'inbox-links': (config) => runInboxLinks(config),
   'search-url': (config, argv) => runSearchUrl(config, argv.join(' ')),
   'search-title': (config, argv) => runSearchTitle(config, argv.join(' '))

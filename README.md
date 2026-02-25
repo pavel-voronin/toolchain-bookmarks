@@ -43,11 +43,6 @@ Output mode:
 bun test
 ```
 
-Test layout:
-
-- `tests/integration/install.test.ts` - install flow
-- `tests/integration/commands.test.ts` - command-by-command checks
-
 ### Scenarios
 
 - `./bookmarks inbox-links`
@@ -91,7 +86,7 @@ Test layout:
 
 ## Request log
 
-Before any fallback read via `jq`, the agent must run:
+Before requesting a missing scenario, the agent must run:
 
 ```bash
 ./bookmarks request "what scenario is missing and why"
@@ -126,4 +121,3 @@ sudo systemctl enable --now bookmarks-make-diff.timer
 `skill-update` renders values into `assets/bookmarks/*`:
 
 - `{{BOOKMARKS_BIN}}`
-- `{{BOOKMARKS_FILE}}`

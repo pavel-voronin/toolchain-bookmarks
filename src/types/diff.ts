@@ -1,18 +1,21 @@
 export type DiffEvent = {
   type: 'link_created_in_inbox' | 'link_created_anywhere' | 'node_moved';
-  bookmark_id: string;
-  node_type: 'folder' | 'link';
+  id: string;
+  nodeType: 'folder' | 'link';
   url: string | null;
   title: string;
-  folder_id: string | null;
-  folder_name: string | null;
-  folder_path: string | null;
-  old_parent_id?: string | null;
-  new_parent_id?: string | null;
-  old_index?: number;
-  new_index?: number;
-  old_path?: string;
-  new_path?: string;
+  path: string;
+  parentId: string | null;
+  index: number;
+  folderId: string | null;
+  folderTitle: string | null;
+  folderPath: string | null;
+  oldParentId?: string | null;
+  newParentId?: string | null;
+  oldIndex?: number;
+  newIndex?: number;
+  oldPath?: string;
+  newPath?: string;
 };
 
 export type DiffDocument = {

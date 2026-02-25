@@ -157,7 +157,7 @@ export function writeBookmarksFixture(runDir: string, withOpenAi = false): void 
       BOOKMARKS_FILE: './bookmarks.json',
       CDP_HTTP: 'http://127.0.0.1:9222',
       BOOKMARKS_EXTENSION_ID: 'ghiijmlkdknmggljcankolbpdiiaopno',
-      INBOX_FOLDER_GUID: 'g10'
+      INBOX_FOLDER_ID: '10'
     },
     null,
     2
@@ -167,5 +167,8 @@ export function writeBookmarksFixture(runDir: string, withOpenAi = false): void 
 }
 
 export function runBookmarks(runDir: string, args: string[], env: NodeJS.ProcessEnv = {}): CmdResult {
-  return runCmd(path.join(runDir, 'bookmarks'), args, runDir, env);
+  return runCmd(path.join(runDir, 'bookmarks'), args, runDir, {
+    BOOKMARKS_API_MOCK_FILE: path.join(runDir, 'bookmarks.json'),
+    ...env
+  });
 }

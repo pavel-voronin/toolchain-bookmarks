@@ -23,22 +23,20 @@ describe('scenario commands', () => {
     expect(out.code).toBe(0);
 
     const text = out.stdout;
-    expect(text.includes('folderId:')).toBe(false);
-    expect(text.includes('nodeType:')).toBe(false);
+    expect(text.includes('guid:')).toBe(false);
+    expect(text.includes('name:')).toBe(false);
 
     const iId = text.indexOf('- id:');
-    const iGuid = text.indexOf('\n  guid:');
     const iTitle = text.indexOf('\n  title:');
+    const iType = text.indexOf('\n  type:');
     const iUrl = text.indexOf('\n  url:');
-    const iFolderGuid = text.indexOf('\n  folderGuid:');
-    const iFolderPath = text.indexOf('\n  folderPath:');
+    const iPath = text.indexOf('\n  path:');
 
     expect(iId).toBeGreaterThanOrEqual(0);
-    expect(iGuid).toBeGreaterThan(iId);
-    expect(iTitle).toBeGreaterThan(iGuid);
-    expect(iUrl).toBeGreaterThan(iTitle);
-    expect(iFolderGuid).toBeGreaterThan(iUrl);
-    expect(iFolderPath).toBeGreaterThan(iFolderGuid);
+    expect(iTitle).toBeGreaterThan(iId);
+    expect(iType).toBeGreaterThan(iTitle);
+    expect(iUrl).toBeGreaterThan(iType);
+    expect(iPath).toBeGreaterThan(iUrl);
   });
 
   test('custom fields keep user order', () => {
@@ -56,6 +54,6 @@ describe('scenario commands', () => {
     expect(iUrl).toBeGreaterThanOrEqual(0);
     expect(iId).toBeGreaterThan(iUrl);
     expect(iTitle).toBeGreaterThan(iId);
-    expect(text.includes('guid:')).toBe(false);
+    expect(text.includes('type:')).toBe(false);
   });
 });

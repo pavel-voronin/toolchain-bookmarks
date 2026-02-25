@@ -1,81 +1,51 @@
 ---
 name: bookmarks
-description: Work with user's bookmarks via local bookmarks CLI
+description: Work with user's bookmarks only through the local bookmarks CLI
 ---
 
-# Chrome Bookmarks Agent
+# Bookmarks Skill
 
 Use this exact binary path (do not rely on PATH): `{{BOOKMARKS_BIN}}`
+Run all commands below as: `{{BOOKMARKS_BIN}} <command> [args]`.
+
+## Rules
+
+- Do not access Chrome Bookmarks file directly.
+- Use CLI commands only.
+- If required scenario is missing, log request with `request "<scenario description>"`
 
 ## Output modes
 
-Human mode (default): YAML.
-Machine mode (less tokens, use it): JSON via `-j`/`--json`.
+- Default: YAML (human-readable)
+- JSON: `-j`
+- Custom fields: `-f id,title,url`
+  - folder fields: id, type, title, path, parentId, index, children, dateAdded, dateGroupModified, folderType, syncing, unmodifiable
+  - link fields: id, type, title, url, path, parentId, index, dateAdded, dateLastUsed, syncing
 
-Field selection is supported for scenario/API calls:
+## Commands
 
-- `-f id,title,url`
-- `--fields id,title,url`
+Scenarios:
 
-## Commands You Should Use
+- `inbox-links` - List links from configured inbox folder.
+- `search-url <needle>` - Find links by URL substring.
+- `search-title <needle>` - Find links by title substring.
 
-`{{BOOKMARKS_BIN}} inbox-links` - List links in Inbox.
-`{{BOOKMARKS_BIN}} search-url <needle>` - Find links by URL substring.
-`{{BOOKMARKS_BIN}} search-title <needle>` - Find links by title substring.
-`{{BOOKMARKS_BIN}} create --parent-id <id> --title <title> --url <url>` - Create link.
-`{{BOOKMARKS_BIN}} update <id> --title <title>` - Update bookmark fields.
-`{{BOOKMARKS_BIN}} move <id> --parent-id <id>` - Move node.
-`{{BOOKMARKS_BIN}} remove <id>` - Remove node.
+API:
 
-`{{BOOKMARKS_BIN}} diff` - Get next diff event using internal cursor. You will be asked externally to get new diff and handle it. Call it until diffs are empty.
+- `get <id...>` - Get nodes by one or more ids.
+- `get-children <id>` - Get direct children for folder id.
+- `get-recent <count>` - Get most recent bookmarks.
+- `get-sub-tree <id>` - Get subtree for node id.
+- `get-tree` - Get full bookmarks tree.
+- `search <query>` - Search bookmarks by query text.
+- `create --parent-id <id> --title <title> [--url <url>] [--index <n>]` - Create folder or link.
+- `update <id> [--title <title>] [--url <url>]` - Update bookmark fields.
+- `move <id> --parent-id <id> [--index <n>]` - Move node.
+- `remove <id>` - Remove node.
+- `remove-tree <id>` - Remove subtree.
 
-`{{BOOKMARKS_BIN}} request <scenario description>` - REQUIRED before any jq fallback on bookmarks file.
+## Diff stream
 
-## Bookmarks File Location
-
-`BOOKMARKS_FILE={{BOOKMARKS_FILE}}`
-
-Do not read this file directly in full. It is too large and wastes tokens.
-Direct full read is forbidden.
-
-If scenario API is missing and file-level fallback is required:
-
-1. First call `{{BOOKMARKS_BIN}} request "<what you want to do>"`.
-2. If scenario is read-only, then use narrow jq query only (targeted path/filter), never dump whole file.
-3. If scenario is for write, then try to solve with existing commands or stop and report.
-
-## Bookmarks File Shape (Practical)
-
-Top-level fields (common):
-
-- `checksum` (string)
-- `version` (number)
-- `roots` (object)
-
-`roots` usually contains folder nodes:
-
-- `bookmark_bar`
-- `other`
-- `synced`
-
-Some Chrome variants/profiles may include additional roots (for example managed/account roots). Treat unknown roots as valid folder roots.
-
-Node base shape (common):
-
-- `id` (string)
-- `guid` (string)
-- `name` (string)
-- `date_added` (string)
-- `type` in `['folder', 'url']`
-
-Folder node:
-
-- required: `children` (array of nodes)
-- optional: `date_modified` (string), `meta_info` (object)
-- forbidden: `url`
-
-URL node:
-
-- required: `url` (string)
-- optional: `meta_info` (object)
-- forbidden: `children`
+- Sometimes you will be asked to process the changes in bookmarks. You can take those changes piece by piece with a command:
+- `diff` - read next event using internal cursor.
+- If no event is returned, stop polling until external trigger or heartbeat.

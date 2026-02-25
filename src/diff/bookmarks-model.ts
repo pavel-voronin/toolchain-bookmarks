@@ -25,17 +25,16 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
   const out = new Map<string, FlatNode>();
 
   for (const [rootKey, rootNode] of Object.entries(roots)) {
-    const rootName = ROOT_NAMES[rootKey] ?? rootNode.name ?? rootKey;
-    const rootPath = `/${rootName}`;
+    const rootTitle = ROOT_NAMES[rootKey] ?? rootNode.name ?? rootNode.title ?? rootKey;
+    const rootPath = `/${rootTitle}`;
     const children = Array.isArray(rootNode.children) ? rootNode.children : [];
 
     children.forEach((child, index) => {
       walk(child, {
         parentId: rootNode.id ?? null,
         parentPath: rootPath,
-        parentName: rootName,
+        parentTitle: rootTitle,
         parentFolderId: rootNode.id ?? null,
-        parentFolderGuid: rootNode.guid ?? null,
         index
       });
     });
@@ -46,9 +45,8 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
     ctx: {
       parentId: string | null;
       parentPath: string;
-      parentName: string;
+      parentTitle: string;
       parentFolderId: string | null;
-      parentFolderGuid: string | null;
       index: number;
     }
   ): void {
@@ -64,16 +62,14 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
     if (isLink) {
       out.set(id, {
         id,
-        guid: node.guid ?? null,
-        nodeType: 'link',
+        type: 'link',
         title,
         url: node.url ?? null,
         parentId: node.parentId ?? ctx.parentId,
         index,
         path: `${ctx.parentPath}/${title}`,
         folderId: ctx.parentFolderId,
-        folderGuid: ctx.parentFolderGuid,
-        folderName: ctx.parentName,
+        folderTitle: ctx.parentTitle,
         folderPath: ctx.parentPath
       });
       return;
@@ -82,16 +78,14 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
     const folderPath = `${ctx.parentPath}/${title}`;
     out.set(id, {
       id,
-      guid: node.guid ?? null,
-      nodeType: 'folder',
+      type: 'folder',
       title,
       url: null,
       parentId: node.parentId ?? ctx.parentId,
       index,
       path: folderPath,
       folderId: node.parentId ?? ctx.parentId,
-      folderGuid: ctx.parentFolderGuid,
-      folderName: ctx.parentName,
+      folderTitle: ctx.parentTitle,
       folderPath: ctx.parentPath
     });
 
@@ -100,9 +94,8 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
       walk(child, {
         parentId: id,
         parentPath: folderPath,
-        parentName: title,
+        parentTitle: title,
         parentFolderId: id,
-        parentFolderGuid: node.guid ?? null,
         index: childIndex
       });
     });
@@ -112,5 +105,5 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
 }
 
 export function isInboxNode(node: FlatNode, config: RuntimeConfig): boolean {
-  return Boolean(config.INBOX_FOLDER_GUID) && node.folderGuid === config.INBOX_FOLDER_GUID;
+  return Boolean(config.INBOX_FOLDER_ID) && node.folderId === config.INBOX_FOLDER_ID;
 }
