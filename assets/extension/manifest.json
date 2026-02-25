@@ -1,19 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Headless Bookmarks API Bridge",
-  "description": "Minimal local API bridge to chrome.bookmarks for automation agents.",
-  "version": "0.1.0",
-  "permissions": ["bookmarks"],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "externally_connectable": {
-    "matches": ["http://127.0.0.1/*", "https://example.com/*"]
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["bridge.html", "bridge.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "name"            : "Headless Bookmarks API Bridge",
+  "description"     : "Minimal local API bridge to chrome.bookmarks API for automation agents",
+  "version"         : "0.1.0",
+  "permissions"     : ["bookmarks"],
+  "icons"           : {
+    "48" : "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }

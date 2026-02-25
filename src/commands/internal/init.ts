@@ -49,7 +49,7 @@ async function runInit(options: { json?: boolean } = {}): Promise<void> {
   ensureDir(paths.systemdDir);
 
   fs.writeFileSync(paths.configPath, renderConfigTs(config), "utf8");
-  const extensionFiles = copyExtensionAssets(paths.extensionDir);
+  const extensionFiles = await copyExtensionAssets(paths.extensionDir);
   const skillFiles = updateSkill(paths, config).updatedFiles;
   const systemdFiles = writeSystemdFiles(paths.systemdDir, paths.cwd).files;
   const initMessage = [

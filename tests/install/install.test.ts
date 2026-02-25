@@ -23,6 +23,12 @@ describe("install", () => {
       true,
     );
     expect(
+      fs.existsSync(path.join(runDir, "extension", "icons", "icon48.png")),
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(runDir, "extension", "icons", "icon128.png")),
+    ).toBe(true);
+    expect(
       fs.existsSync(path.join(runDir, "skills", "bookmarks", "SKILL.md")),
     ).toBe(true);
     expect(

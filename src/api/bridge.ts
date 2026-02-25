@@ -17,6 +17,9 @@ const API_METHODS = new Set([
   "__methods",
 ]);
 
+const BRIDGE_CHANNEL = "bookmarks-api-bridge";
+const BRIDGE_RESPONSE_CHANNEL = "bookmarks-api-bridge-response";
+
 type CdpTarget = {
   id: string;
   type: string;
@@ -161,19 +164,19 @@ export async function callBookmarksApi(
 
   const target = await ensureBridgeTarget(config);
   const id = `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const payload = { channel: "cbm-bridge", id, method, args };
+  const payload = { channel: BRIDGE_CHANNEL, id, method, args };
 
   const expression = `(() => {
     const request = ${JSON.stringify(payload)};
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
         window.removeEventListener('message', onMessage);
-        resolve(JSON.stringify({ ok: false, error: 'Bridge timeout', id: request.id, channel: 'cbm-bridge-response' }));
+        resolve(JSON.stringify({ ok: false, error: 'Bridge timeout', id: request.id, channel: '${BRIDGE_RESPONSE_CHANNEL}' }));
       }, 15000);
 
       function onMessage(event) {
         const data = event.data;
-        if (!data || data.channel !== 'cbm-bridge-response' || data.id !== request.id) {
+        if (!data || data.channel !== '${BRIDGE_RESPONSE_CHANNEL}' || data.id !== request.id) {
           return;
         }
         clearTimeout(timeout);

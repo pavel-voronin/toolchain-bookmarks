@@ -1,7 +1,7 @@
 "use strict";
 
-const CHANNEL = "cbm-bridge";
-const RESPONSE_CHANNEL = "cbm-bridge-response";
+const CHANNEL = "bookmarks-api-bridge";
+const RESPONSE_CHANNEL = "bookmarks-api-bridge-response";
 
 const BOOKMARKS_METHODS = new Set([
   "create",
@@ -63,19 +63,15 @@ async function invoke(method, args) {
     throw new Error(`chrome.bookmarks.${method} is not available`);
   }
 
-  try {
-    return await fn(...args);
-  } catch (error) {
-    return await new Promise((resolve, reject) => {
-      fn(...args, (result) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        resolve(result);
-      });
+  return await new Promise((resolve, reject) => {
+    fn(...args, (result) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+      resolve(result);
     });
-  }
+  });
 }
 
 function reply(targetWindow, targetOrigin, message) {
@@ -83,13 +79,17 @@ function reply(targetWindow, targetOrigin, message) {
 }
 
 window.addEventListener("message", (event) => {
+  if (event.source !== window || event.origin !== window.location.origin) {
+    return;
+  }
+
   let request;
 
   try {
     request = parsePayload(event.data);
   } catch (error) {
     if (event.source && typeof event.source.postMessage === "function") {
-      reply(event.source, event.origin || "*", {
+      reply(event.source, event.origin, {
         channel: RESPONSE_CHANNEL,
         ok: false,
         id: event.data?.id ?? null,
@@ -99,17 +99,13 @@ window.addEventListener("message", (event) => {
     return;
   }
 
-  if (
-    !request ||
-    !event.source ||
-    typeof event.source.postMessage !== "function"
-  ) {
+  if (!request) {
     return;
   }
 
   invoke(request.method, request.args)
     .then((result) => {
-      reply(event.source, event.origin || "*", {
+      reply(event.source, event.origin, {
         channel: RESPONSE_CHANNEL,
         ok: true,
         id: request.id,
@@ -117,7 +113,7 @@ window.addEventListener("message", (event) => {
       });
     })
     .catch((error) => {
-      reply(event.source, event.origin || "*", {
+      reply(event.source, event.origin, {
         channel: RESPONSE_CHANNEL,
         ok: false,
         id: request.id,
