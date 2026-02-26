@@ -34,7 +34,7 @@ API:
 - `get-children <id>` - Get direct children for folder id.
 - `get-recent <count>` - Get most recent bookmarks.
 - `get-sub-tree <id>` - Get subtree for node id.
-- `get-tree` - Get full bookmarks tree.
+- `get-tree` - Get full bookmarks tree. Always prefer other methods, use it as a last call!
 - `search <query>` - Search bookmarks by query text.
 - `create --parent-id <id> --title <title> [--url <url>] [--index <n>]` - Create folder or link.
 - `update <id> [--title <title>] [--url <url>]` - Update bookmark fields.
