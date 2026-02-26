@@ -3,7 +3,6 @@
 import { cac } from "cac";
 import { version } from "../package.json";
 import { logCommandError } from "./utils/errors";
-import registerInitCommand from "./commands/internal/init";
 import registerDoctorCommand from "./commands/internal/doctor";
 import registerSkillUpdateCommand from "./commands/internal/skill-update";
 import registerUpdateCommand from "./commands/internal/update";
@@ -30,7 +29,6 @@ const cli = cac("bookmarks");
 cli.help(formatHelpSections);
 cli.version(version);
 
-registerInitCommand(cli);
 registerDoctorCommand(cli);
 registerSkillUpdateCommand(cli);
 registerUpdateCommand(cli);

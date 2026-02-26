@@ -15,7 +15,7 @@ export default function registerInboxLinksCommand(cli: CAC): void {
         const config = await loadConfig(resolvePaths());
         if (!config.INBOX_FOLDER_ID) {
           fail(
-            "Inbox folder is not configured. Run `bookmarks init` and choose an inbox folder.",
+            "Inbox folder is not configured. Set `INBOX_FOLDER_ID` in config.ts.",
             1,
           );
         }

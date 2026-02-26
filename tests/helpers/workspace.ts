@@ -75,11 +75,63 @@ export function runCmd(
   };
 }
 
-export function runInstall(runDir: string, tarball: string): CmdResult {
+export function runInstall(
+  runDir: string,
+  tarball: string,
+  envOverrides: NodeJS.ProcessEnv = {},
+): CmdResult {
+  const installBookmarks = path.join(runDir, "install-bookmarks.json");
+  const payload = {
+    checksum: "v-install",
+    version: 1,
+    roots: {
+      bookmark_bar: {
+        id: "1",
+        guid: "g1",
+        name: "bookmark_bar",
+        date_added: "1",
+        type: "folder",
+        children: [
+          {
+            id: "10",
+            guid: "g10",
+            name: "Inbox",
+            date_added: "1",
+            type: "folder",
+            children: [],
+          },
+        ],
+      },
+      other: {
+        id: "2",
+        guid: "g2",
+        name: "other",
+        date_added: "1",
+        type: "folder",
+        children: [],
+      },
+      synced: {
+        id: "3",
+        guid: "g3",
+        name: "synced",
+        date_added: "1",
+        type: "folder",
+        children: [],
+      },
+    },
+  };
+  fs.writeFileSync(
+    installBookmarks,
+    `${JSON.stringify(payload, null, 2)}\n`,
+    "utf8",
+  );
+
   return runCmd("sh", [path.join(REPO_ROOT, "install.sh")], runDir, {
     REPO_TARBALL: tarball,
-    BOOKMARKS_INSTALL_SKIP_INIT: "0",
-    BOOKMARKS_INIT_USE_DEFAULTS: "1",
+    BOOKMARKS_WIZARD_INTERACTIVE: "0",
+    BOOKMARKS_FILE: installBookmarks,
+    CDP_HTTP: "http://127.0.0.1:9222",
+    ...envOverrides,
   });
 }
 
@@ -115,12 +167,53 @@ export function setupWorkspace(): {
   const runDir = path.join(tmpRoot, "run");
   fs.mkdirSync(runDir, { recursive: true });
 
-  const init = runCmd("bun", [CLI_ENTRY, "init", "--json"], runDir, {
-    BOOKMARKS_INIT_USE_DEFAULTS: "1",
-  });
-  if (init.code !== 0) {
-    throw new Error(`init failed: ${init.stderr || init.stdout}`);
-  }
+  const configTs = `export const config = ${JSON.stringify(
+    {
+      BOOKMARKS_FILE: "./bookmarks.json",
+      CDP_HTTP: "http://127.0.0.1:9222",
+      INBOX_FOLDER_ID: "",
+    },
+    null,
+    2,
+  )} as const;\n\nexport default config;\n`;
+
+  fs.writeFileSync(path.join(runDir, "config.ts"), configTs, "utf8");
+  fs.mkdirSync(path.join(runDir, "requests"), { recursive: true });
+  fs.mkdirSync(path.join(runDir, "snapshots"), { recursive: true });
+  fs.mkdirSync(path.join(runDir, "diffs"), { recursive: true });
+  fs.mkdirSync(path.join(runDir, "skills", "bookmarks"), { recursive: true });
+  fs.mkdirSync(path.join(runDir, "systemd"), { recursive: true });
+
+  const skillTemplate = fs.readFileSync(
+    path.join(REPO_ROOT, "assets", "bookmarks", "SKILL.md"),
+    "utf8",
+  );
+  const skillRendered = skillTemplate.replaceAll(
+    "{{BOOKMARKS_BIN}}",
+    path.join(runDir, "bookmarks"),
+  );
+  fs.writeFileSync(
+    path.join(runDir, "skills", "bookmarks", "SKILL.md"),
+    skillRendered,
+    "utf8",
+  );
+
+  const serviceTemplate = fs.readFileSync(
+    path.join(REPO_ROOT, "assets", "systemd", "bookmarks-make-diff.service"),
+    "utf8",
+  );
+  const serviceRendered = serviceTemplate
+    .replaceAll("{{BOOKMARKS_CWD}}", runDir)
+    .replaceAll("{{BOOKMARKS_BIN}}", path.join(runDir, "bookmarks"));
+  fs.writeFileSync(
+    path.join(runDir, "systemd", "bookmarks-make-diff.service"),
+    serviceRendered,
+    "utf8",
+  );
+  fs.copyFileSync(
+    path.join(REPO_ROOT, "assets", "systemd", "bookmarks-make-diff.timer"),
+    path.join(runDir, "systemd", "bookmarks-make-diff.timer"),
+  );
 
   return { tmpRoot, runDir };
 }
@@ -243,7 +336,6 @@ export function runBookmarks(
   env: NodeJS.ProcessEnv = {},
 ): CmdResult {
   return runCmd("bun", [CLI_ENTRY, ...args], runDir, {
-    BOOKMARKS_INIT_USE_DEFAULTS: "1",
     BOOKMARKS_API_MOCK_FILE: path.join(runDir, "bookmarks.json"),
     ...env,
   });

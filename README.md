@@ -19,11 +19,10 @@ curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/m
 2. download repository tarball
 3. build `bookmarks`
 4. copy binary into current directory
-5. run `./bookmarks init`
+5. run interactive runtime setup
 
 ## Commands
 
-- `./bookmarks init`
 - `./bookmarks doctor`
 - `./bookmarks skill-update`
 - `./bookmarks self-update`
@@ -99,7 +98,7 @@ All command errors are written to:
 
 ## Systemd (Ubuntu, every 5 seconds)
 
-`bookmarks init` generates:
+`install.sh` generates:
 
 - `./systemd/bookmarks-make-diff.service`
 - `./systemd/bookmarks-make-diff.timer`

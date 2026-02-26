@@ -11,7 +11,6 @@ function splitCommandSections(body: string): Array<HelpSection> {
   const lines = body.split("\n").filter((line) => line.trim().length > 0);
 
   const internalNames = new Set([
-    "init",
     "doctor",
     "skill-update",
     "self-update",
