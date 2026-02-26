@@ -1,6 +1,7 @@
 import { getApi, type API } from "../api/api";
 import {
   renderCommandResult,
+  type HumanRenderContext,
   type CommonOutputOptions,
 } from "../output/service";
 import { fail } from "../utils/print";
@@ -24,6 +25,7 @@ function splitOutputOptions(options: CommonOutputOptions): {
 
 export function withAction(
   handler: ActionHandler,
+  humanOverride?: (ctx: HumanRenderContext) => string,
 ): (...rawArgs: unknown[]) => Promise<void> {
   return async (...rawArgs: unknown[]) => {
     try {
@@ -32,7 +34,11 @@ export function withAction(
       const { output, handlerOptions } = splitOutputOptions(options);
       const api = await getApi();
       const result = await handler({ api }, ...positional, handlerOptions);
-      renderCommandResult(result, output);
+      renderCommandResult(result, output, {
+        humanOverride,
+        positionalArgs: positional,
+        handlerOptions,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       fail(message, 1);

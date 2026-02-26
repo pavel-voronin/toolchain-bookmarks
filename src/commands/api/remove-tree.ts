@@ -9,8 +9,14 @@ export default function registerRemoveTreeCommand(cli: CAC): void {
       default: "id,title,type,url,path",
     })
     .action(
-      withAction(async ({ api }, id: string) => {
-        return api.removeTree(id);
-      }),
+      withAction(
+        async ({ api }, id: string) => {
+          return api.removeTree(id);
+        },
+        ({ positionalArgs }) => {
+          const id = positionalArgs?.[0] as string;
+          return `Tree rooted at ID ${id} was removed successfully.`;
+        },
+      ),
     );
 }

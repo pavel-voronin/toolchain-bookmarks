@@ -9,8 +9,14 @@ export default function registerRemoveCommand(cli: CAC): void {
       default: "id,title,type,url,path",
     })
     .action(
-      withAction(async ({ api }, id: string) => {
-        return api.remove(id);
-      }),
+      withAction(
+        async ({ api }, id: string) => {
+          return api.remove(id);
+        },
+        ({ positionalArgs }) => {
+          const id = positionalArgs?.[0] as string;
+          return `Object with ID ${id} was removed successfully.`;
+        },
+      ),
     );
 }

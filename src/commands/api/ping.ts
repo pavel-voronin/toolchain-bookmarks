@@ -7,8 +7,11 @@ export default function registerPingCommand(cli: CAC): void {
     .option("-j, --json", "JSON output")
     .option("-f, --fields <fields>", "Comma-separated output fields")
     .action(
-      withAction(async ({ api }) => {
-        return api.ping();
-      }),
+      withAction(
+        async ({ api }) => {
+          return api.ping();
+        },
+        () => "pong",
+      ),
     );
 }

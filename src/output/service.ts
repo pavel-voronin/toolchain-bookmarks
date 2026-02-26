@@ -9,6 +9,19 @@ export type CommonOutputOptions = {
   fields?: string;
 };
 
+export type HumanRenderContext = {
+  result: unknown;
+  picked: unknown;
+  positionalArgs?: unknown[];
+  handlerOptions?: Record<string, unknown>;
+};
+
+export type CommandRenderMeta = {
+  humanOverride?: (ctx: HumanRenderContext) => string;
+  positionalArgs?: unknown[];
+  handlerOptions?: Record<string, unknown>;
+};
+
 function isCanonicalNodeResult(
   value: unknown,
 ): value is CanonicalBookmarkNode | CanonicalBookmarkNode[] {
@@ -21,6 +34,7 @@ function isCanonicalNodeResult(
 export function renderCommandResult(
   result: unknown,
   options: CommonOutputOptions,
+  meta?: CommandRenderMeta,
 ): void {
   const json = Boolean(options.json);
   const fields = parseFields(options.fields ?? null);
@@ -30,6 +44,15 @@ export function renderCommandResult(
       : isCanonicalNodeResult(result)
         ? applyModelDefaults(result)
         : result;
+  const human =
+    !json && meta?.humanOverride
+      ? meta.humanOverride({
+          result,
+          picked,
+          positionalArgs: meta.positionalArgs,
+          handlerOptions: meta.handlerOptions,
+        })
+      : null;
 
-  printOutput({ ok: true, result: picked }, json, renderHuman(picked));
+  printOutput({ ok: true, result: picked }, json, human ?? renderHuman(picked));
 }
