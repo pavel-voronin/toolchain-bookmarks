@@ -2,14 +2,10 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { ensureDir, readJsonFile, writeJsonFile } from "../utils/fs";
-import {
-  normalizeBookmarks,
-  readBookmarksJson,
-  isInboxNode,
-} from "./bookmarks-model";
-import type { FlatNode } from "../types/bookmarks";
+import { normalizeBookmarks, readBookmarksJson } from "./bookmarks-model";
 import type { AppPaths, RuntimeConfig } from "../types/config";
-import type { DiffDocument, DiffEvent, DiffState } from "../types/diff";
+import type { DiffDocument, DiffState } from "../types/diff";
+import { buildEvents } from "./events";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -72,79 +68,6 @@ function readNextDiff(diffsDir: string, sinceId: number): DiffDocument | null {
   return readJsonFile<DiffDocument>(file);
 }
 
-function buildEvents(
-  prev: Map<string, FlatNode>,
-  curr: Map<string, FlatNode>,
-  config: RuntimeConfig,
-): DiffEvent[] {
-  const events: DiffEvent[] = [];
-
-  for (const [id, node] of curr) {
-    if (node.type !== "link" || prev.has(id)) {
-      continue;
-    }
-    if (isInboxNode(node, config)) {
-      events.push({
-        type: "link_created_in_inbox",
-        id,
-        nodeType: "link",
-        url: node.url,
-        title: node.title,
-        path: node.path,
-        parentId: node.parentId,
-        index: node.index,
-        folderId: node.folderId,
-        folderTitle: node.folderTitle,
-        folderPath: node.folderPath,
-      });
-    }
-    events.push({
-      type: "link_created_anywhere",
-      id,
-      nodeType: "link",
-      url: node.url,
-      title: node.title,
-      path: node.path,
-      parentId: node.parentId,
-      index: node.index,
-      folderId: node.folderId,
-      folderTitle: node.folderTitle,
-      folderPath: node.folderPath,
-    });
-  }
-
-  for (const [id, node] of curr) {
-    const old = prev.get(id);
-    if (!old) {
-      continue;
-    }
-    if (old.parentId === node.parentId && old.index === node.index) {
-      continue;
-    }
-    events.push({
-      type: "node_moved",
-      id,
-      nodeType: node.type,
-      url: node.url,
-      title: node.title,
-      path: node.path,
-      parentId: node.parentId,
-      index: node.index,
-      folderId: node.folderId,
-      folderTitle: node.folderTitle,
-      folderPath: node.folderPath,
-      oldParentId: old.parentId,
-      newParentId: node.parentId,
-      oldIndex: old.index,
-      newIndex: node.index,
-      oldPath: old.path,
-      newPath: node.path,
-    });
-  }
-
-  return events;
-}
-
 export function makeDiff(
   paths: AppPaths,
   config: RuntimeConfig,
@@ -204,13 +127,21 @@ export function makeDiff(
 
   let diffId: number | null = null;
   if (events.length > 0) {
-    diffId = state.lastSeq + 1;
-    const diffDoc: DiffDocument = { schema_version: 1, id: diffId, ts, events };
-    const diffPath = path.join(
-      paths.diffsDir,
-      `${String(diffId).padStart(12, "0")}.json`,
-    );
-    writeJsonFile(diffPath, diffDoc);
+    for (const [offset, event] of events.entries()) {
+      const nextId = state.lastSeq + offset + 1;
+      const diffDoc: DiffDocument = {
+        schema_version: 1,
+        id: nextId,
+        ts,
+        event,
+      };
+      const diffPath = path.join(
+        paths.diffsDir,
+        `${String(nextId).padStart(12, "0")}.json`,
+      );
+      writeJsonFile(diffPath, diffDoc);
+      diffId = nextId;
+    }
   }
 
   writeState(paths, {

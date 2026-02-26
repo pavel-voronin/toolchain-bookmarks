@@ -1,6 +1,7 @@
 import type { CAC } from "cac";
 import { resolvePaths } from "../../config/runtime";
 import { readNextDiffFromCursor } from "../../diff/engine";
+import { renderHumanYaml } from "../../output/render";
 import { printOutput } from "../../utils/print";
 
 async function runDiff(options: { json?: boolean } = {}): Promise<void> {
@@ -11,7 +12,7 @@ async function runDiff(options: { json?: boolean } = {}): Promise<void> {
     printOutput(
       { ok: true, event: null },
       Boolean(options.json),
-      "no new diff",
+      renderHumanYaml({ event: null }),
     );
     return;
   }
@@ -19,7 +20,7 @@ async function runDiff(options: { json?: boolean } = {}): Promise<void> {
   printOutput(
     { ok: true, event: next },
     Boolean(options.json),
-    `diff ${next.id}`,
+    renderHumanYaml(next),
   );
 }
 

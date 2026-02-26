@@ -1,28 +1,13 @@
-export type DiffEvent = {
-  type: "link_created_in_inbox" | "link_created_anywhere" | "node_moved";
-  id: string;
-  nodeType: "folder" | "link";
-  url: string | null;
-  title: string;
-  path: string;
-  parentId: string | null;
-  index: number;
-  folderId: string | null;
-  folderTitle: string | null;
-  folderPath: string | null;
-  oldParentId?: string | null;
-  newParentId?: string | null;
-  oldIndex?: number;
-  newIndex?: number;
-  oldPath?: string;
-  newPath?: string;
-};
+import type { FolderCreatedInInboxEvent } from "../diff/events/folder-created-in-inbox";
+import type { LinkCreatedInInboxEvent } from "../diff/events/link-created-in-inbox";
+
+export type DiffEvent = LinkCreatedInInboxEvent | FolderCreatedInInboxEvent;
 
 export type DiffDocument = {
   schema_version: 1;
   id: number;
   ts: string;
-  events: DiffEvent[];
+  event: DiffEvent;
 };
 
 export type DiffState = {
