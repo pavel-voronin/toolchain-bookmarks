@@ -60,7 +60,6 @@ bun test
 - `./bookmarks remove <id>`
 - `./bookmarks remove-tree <id>`
 - `./bookmarks ping`
-- `./bookmarks methods`
 
 ## Runtime layout (current directory)
 

@@ -16,8 +16,7 @@ type ApiAlias =
   | "move"
   | "remove"
   | "remove-tree"
-  | "ping"
-  | "methods";
+  | "ping";
 
 export class API {
   private constructor(private readonly config: RuntimeConfig) {}
@@ -92,10 +91,6 @@ export class API {
     return this.run("ping", []);
   }
 
-  async methods(): Promise<unknown> {
-    return this.run("methods", []);
-  }
-
   private async run(alias: ApiAlias, args: unknown[]): Promise<unknown> {
     const method = aliasToMethod(alias);
     const apiResult = await callBookmarksApi(this.config, method, args);
@@ -139,7 +134,7 @@ export class API {
   }
 
   private isNodeReturningApiMethod(method: string): boolean {
-    return !["__ping", "__methods", "remove", "removeTree"].includes(method);
+    return !["__ping", "remove", "removeTree"].includes(method);
   }
 
   private async canonicalizeApiResult(

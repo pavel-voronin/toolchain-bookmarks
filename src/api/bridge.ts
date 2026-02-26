@@ -14,22 +14,7 @@ const API_METHODS = new Set([
   "search",
   "update",
   "__ping",
-  "__methods",
 ]);
-
-const BRIDGE_BOOKMARKS_METHODS = [
-  "create",
-  "get",
-  "getChildren",
-  "getRecent",
-  "getSubTree",
-  "getTree",
-  "move",
-  "remove",
-  "removeTree",
-  "search",
-  "update",
-] as const;
 
 const CDP_EVAL_TIMEOUT_MS = 8000;
 
@@ -181,7 +166,6 @@ export async function callBookmarksApi(
 
   const target = await ensureBridgeTarget(config);
   const payload = { method, args };
-  const bridgeMethods = JSON.stringify([...BRIDGE_BOOKMARKS_METHODS]);
 
   const expression = `(() => {
     const request = ${JSON.stringify(payload)};
@@ -189,12 +173,6 @@ export async function callBookmarksApi(
       try {
         if (request.method === '__ping') {
           resolve(JSON.stringify({ ok: true, result: { ok: true, service: 'bookmarks-bridge' } }));
-          return;
-        }
-
-        if (request.method === '__methods') {
-          const methods = ${bridgeMethods};
-          resolve(JSON.stringify({ ok: true, result: methods.slice().sort() }));
           return;
         }
 
@@ -237,7 +215,6 @@ export async function callBookmarksApi(
 export function aliasToMethod(name: string): string {
   const map: Record<string, string> = {
     ping: "__ping",
-    methods: "__methods",
     "get-children": "getChildren",
     "get-recent": "getRecent",
     "get-sub-tree": "getSubTree",

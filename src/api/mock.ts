@@ -172,22 +172,6 @@ export function callMockBookmarksApi(
     return { ok: true, service: "bookmarks-bridge-mock" };
   }
 
-  if (method === "__methods") {
-    return [
-      "create",
-      "get",
-      "getChildren",
-      "getRecent",
-      "getSubTree",
-      "getTree",
-      "move",
-      "remove",
-      "removeTree",
-      "search",
-      "update",
-    ];
-  }
-
   if (method === "getTree") {
     return tree;
   }

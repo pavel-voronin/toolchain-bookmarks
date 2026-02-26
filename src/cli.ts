@@ -22,7 +22,6 @@ import registerMoveCommand from "./commands/api/move";
 import registerRemoveCommand from "./commands/api/remove";
 import registerRemoveTreeCommand from "./commands/api/remove-tree";
 import registerPingCommand from "./commands/api/ping";
-import registerMethodsCommand from "./commands/api/methods";
 import { formatHelpSections } from "./help";
 
 const cli = cac("bookmarks");
@@ -50,7 +49,6 @@ registerMoveCommand(cli);
 registerRemoveCommand(cli);
 registerRemoveTreeCommand(cli);
 registerPingCommand(cli);
-registerMethodsCommand(cli);
 
 const startupArgs = process.argv.slice(2);
 if (startupArgs.length === 0) {
