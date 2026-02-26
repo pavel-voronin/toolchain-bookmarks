@@ -20,7 +20,7 @@ function runUpdate(options: { json?: boolean } = {}): void {
 
 export default function registerUpdateCommand(cli: CAC): void {
   cli
-    .command("update", "Reinstall CLI via install script")
+    .command("self-update", "Reinstall CLI via install script")
     .option("-j, --json", "JSON output")
     .action((options) => runUpdate(options));
 }

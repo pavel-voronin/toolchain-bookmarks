@@ -26,7 +26,7 @@ curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/m
 - `./bookmarks init`
 - `./bookmarks doctor`
 - `./bookmarks skill-update`
-- `./bookmarks update`
+- `./bookmarks self-update`
 - `./bookmarks make-diff`
 - `./bookmarks diff`
 - `./bookmarks request <scenario description>`
