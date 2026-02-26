@@ -177,11 +177,6 @@ export async function promptConfig(
   try {
     const bookmarksFile = await ask(rl, "BOOKMARKS_FILE", base.BOOKMARKS_FILE);
     const cdpHttp = await ask(rl, "CDP_HTTP", base.CDP_HTTP);
-    const extensionId = await ask(
-      rl,
-      "BOOKMARKS_EXTENSION_ID",
-      base.BOOKMARKS_EXTENSION_ID,
-    );
     const inboxFolderName = await ask(rl, "INBOX_FOLDER_NAME", "inbox");
     const inboxFolderId = await chooseInboxFolderId(
       rl,
@@ -194,7 +189,6 @@ export async function promptConfig(
     return {
       BOOKMARKS_FILE: bookmarksFile,
       CDP_HTTP: cdpHttp,
-      BOOKMARKS_EXTENSION_ID: extensionId,
       INBOX_FOLDER_ID: inboxFolderId,
     };
   } catch {

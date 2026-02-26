@@ -228,7 +228,6 @@ export function writeBookmarksFixture(
     {
       BOOKMARKS_FILE: "./bookmarks.json",
       CDP_HTTP: "http://127.0.0.1:9222",
-      BOOKMARKS_EXTENSION_ID: "ghiijmlkdknmggljcankolbpdiiaopno",
       INBOX_FOLDER_ID: "10",
     },
     null,

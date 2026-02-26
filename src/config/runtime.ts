@@ -7,7 +7,6 @@ export function resolvePaths(cwd = process.cwd()): AppPaths {
   return {
     cwd,
     configPath: path.join(cwd, "config.ts"),
-    extensionDir: path.join(cwd, "extension"),
     skillDir: path.join(cwd, "skills", "bookmarks"),
     systemdDir: path.join(cwd, "systemd"),
     snapshotsDir: path.join(cwd, "snapshots"),

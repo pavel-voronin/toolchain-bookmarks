@@ -3,7 +3,6 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { CAC } from "cac";
 import { loadConfig, resolvePaths } from "../../config/runtime";
-import { extensionLooksValid } from "../../config/assets";
 import { validateBookmarksFile } from "../../diff/engine";
 import { listFilesRecursive } from "../../utils/fs";
 import { printOutput } from "../../utils/print";
@@ -52,16 +51,6 @@ async function runDoctor(options: { json?: boolean } = {}): Promise<void> {
           name: "bookmarks-file",
           status: "FAIL",
           message: bookmarksValidity.error ?? "invalid file",
-        },
-  );
-
-  checks.push(
-    extensionLooksValid(paths.extensionDir)
-      ? { name: "extension", status: "OK", message: paths.extensionDir }
-      : {
-          name: "extension",
-          status: "FAIL",
-          message: "missing required extension files",
         },
   );
 

@@ -3,6 +3,7 @@ import {
   renderCommandResult,
   type CommonOutputOptions,
 } from "../output/service";
+import { fail } from "../utils/print";
 
 type ActionHandler = (
   ctx: { api: API },
@@ -25,11 +26,16 @@ export function withAction(
   handler: ActionHandler,
 ): (...rawArgs: unknown[]) => Promise<void> {
   return async (...rawArgs: unknown[]) => {
-    const options = ((rawArgs.at(-1) ?? {}) as CommonOutputOptions) ?? {};
-    const positional = rawArgs.slice(0, -1);
-    const { output, handlerOptions } = splitOutputOptions(options);
-    const api = await getApi();
-    const result = await handler({ api }, ...positional, handlerOptions);
-    renderCommandResult(result, output);
+    try {
+      const options = ((rawArgs.at(-1) ?? {}) as CommonOutputOptions) ?? {};
+      const positional = rawArgs.slice(0, -1);
+      const { output, handlerOptions } = splitOutputOptions(options);
+      const api = await getApi();
+      const result = await handler({ api }, ...positional, handlerOptions);
+      renderCommandResult(result, output);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      fail(message, 1);
+    }
   };
 }

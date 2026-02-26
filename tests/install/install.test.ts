@@ -19,15 +19,6 @@ describe("install", () => {
 
     expect(fs.existsSync(path.join(runDir, "bookmarks"))).toBe(true);
     expect(fs.existsSync(path.join(runDir, "config.ts"))).toBe(true);
-    expect(fs.existsSync(path.join(runDir, "extension", "manifest.json"))).toBe(
-      true,
-    );
-    expect(
-      fs.existsSync(path.join(runDir, "extension", "icons", "icon48.png")),
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(runDir, "extension", "icons", "icon128.png")),
-    ).toBe(true);
     expect(
       fs.existsSync(path.join(runDir, "skills", "bookmarks", "SKILL.md")),
     ).toBe(true);

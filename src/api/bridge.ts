@@ -17,8 +17,21 @@ const API_METHODS = new Set([
   "__methods",
 ]);
 
-const BRIDGE_CHANNEL = "bookmarks-api-bridge";
-const BRIDGE_RESPONSE_CHANNEL = "bookmarks-api-bridge-response";
+const BRIDGE_BOOKMARKS_METHODS = [
+  "create",
+  "get",
+  "getChildren",
+  "getRecent",
+  "getSubTree",
+  "getTree",
+  "move",
+  "remove",
+  "removeTree",
+  "search",
+  "update",
+] as const;
+
+const CDP_EVAL_TIMEOUT_MS = 8000;
 
 type CdpTarget = {
   id: string;
@@ -26,6 +39,8 @@ type CdpTarget = {
   url: string;
   webSocketDebuggerUrl: string;
 };
+
+const BOOKMARKS_PAGE_URL = "chrome://bookmarks/";
 
 async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
   const response = await fetch(url, init);
@@ -43,27 +58,29 @@ async function listTargets(cdpHttp: string): Promise<CdpTarget[]> {
   return payload as CdpTarget[];
 }
 
-function bridgeUrl(config: RuntimeConfig): string {
-  return `chrome-extension://${config.BOOKMARKS_EXTENSION_ID}/bridge.html`;
+function isBookmarksPageTarget(target: CdpTarget): boolean {
+  return (
+    target.type === "page" &&
+    (target.url === BOOKMARKS_PAGE_URL ||
+      target.url.startsWith("chrome://bookmarks"))
+  );
 }
 
 async function ensureBridgeTarget(config: RuntimeConfig): Promise<CdpTarget> {
-  const url = bridgeUrl(config);
   let targets = await listTargets(config.CDP_HTTP);
-  let matches = targets.filter(
-    (target) => target.type === "page" && target.url === url,
-  );
+  let matches = targets.filter(isBookmarksPageTarget);
 
   if (matches.length === 0) {
-    await fetchJson(`${config.CDP_HTTP}/json/new?${url}`, { method: "PUT" });
-    targets = await listTargets(config.CDP_HTTP);
-    matches = targets.filter(
-      (target) => target.type === "page" && target.url === url,
+    await fetchJson(
+      `${config.CDP_HTTP}/json/new?${encodeURIComponent(BOOKMARKS_PAGE_URL)}`,
+      { method: "PUT" },
     );
+    targets = await listTargets(config.CDP_HTTP);
+    matches = targets.filter(isBookmarksPageTarget);
   }
 
   if (matches.length === 0) {
-    throw new Error("Failed to create bridge tab");
+    throw new Error("Failed to create chrome://bookmarks tab");
   }
 
   const keep = matches[0];
@@ -91,7 +108,7 @@ async function cdpEvaluate(
     const timeout = setTimeout(() => {
       ws.close();
       reject(new Error("CDP Runtime.evaluate timeout"));
-    }, 20000);
+    }, CDP_EVAL_TIMEOUT_MS);
 
     ws.addEventListener("open", () => {
       ws.send(
@@ -163,29 +180,44 @@ export async function callBookmarksApi(
   }
 
   const target = await ensureBridgeTarget(config);
-  const id = `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const payload = { channel: BRIDGE_CHANNEL, id, method, args };
+  const payload = { method, args };
+  const bridgeMethods = JSON.stringify([...BRIDGE_BOOKMARKS_METHODS]);
 
   const expression = `(() => {
     const request = ${JSON.stringify(payload)};
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        window.removeEventListener('message', onMessage);
-        resolve(JSON.stringify({ ok: false, error: 'Bridge timeout', id: request.id, channel: '${BRIDGE_RESPONSE_CHANNEL}' }));
-      }, 15000);
-
-      function onMessage(event) {
-        const data = event.data;
-        if (!data || data.channel !== '${BRIDGE_RESPONSE_CHANNEL}' || data.id !== request.id) {
+      try {
+        if (request.method === '__ping') {
+          resolve(JSON.stringify({ ok: true, result: { ok: true, service: 'bookmarks-bridge' } }));
           return;
         }
-        clearTimeout(timeout);
-        window.removeEventListener('message', onMessage);
-        resolve(JSON.stringify(data));
-      }
 
-      window.addEventListener('message', onMessage);
-      window.postMessage(request, '*');
+        if (request.method === '__methods') {
+          const methods = ${bridgeMethods};
+          resolve(JSON.stringify({ ok: true, result: methods.slice().sort() }));
+          return;
+        }
+
+        const fn = chrome.bookmarks?.[request.method];
+        if (typeof fn !== 'function') {
+          resolve(JSON.stringify({ ok: false, error: 'chrome.bookmarks.' + request.method + ' is not available' }));
+          return;
+        }
+
+        fn(...request.args, (result) => {
+          const err = chrome.runtime?.lastError;
+          if (err) {
+            resolve(JSON.stringify({ ok: false, error: err.message ?? String(err) }));
+            return;
+          }
+          resolve(JSON.stringify({ ok: true, result }));
+        });
+      } catch (error) {
+        resolve(JSON.stringify({
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        }));
+      }
     });
   })()`;
 

@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import type { CAC } from "cac";
-import { copyExtensionAssets, extensionLooksValid } from "../../config/assets";
 import { DEFAULT_CONFIG } from "../../config/defaults";
 import { writeSystemdFiles } from "../../config/systemd";
 import { loadConfig, renderConfigTs, resolvePaths } from "../../config/runtime";
@@ -8,15 +7,10 @@ import { promptConfig } from "../../config/prompt";
 import { updateSkill } from "../../skill/update";
 import { ensureDir } from "../../utils/fs";
 import { printOutput } from "../../utils/print";
-import type { RuntimeConfig } from "../../types/config";
 
-function isInitialized(
-  config: RuntimeConfig,
-  paths: ReturnType<typeof resolvePaths>,
-): boolean {
+function isInitialized(paths: ReturnType<typeof resolvePaths>): boolean {
   return (
     fs.existsSync(paths.configPath) &&
-    extensionLooksValid(paths.extensionDir) &&
     fs.existsSync(paths.skillDir) &&
     fs.existsSync(paths.systemdDir) &&
     fs.existsSync(paths.requestsDir) &&
@@ -32,7 +26,7 @@ async function runInit(options: { json?: boolean } = {}): Promise<void> {
   const existing = await loadConfig(paths);
   const current = fs.existsSync(paths.configPath) ? existing : DEFAULT_CONFIG;
 
-  if (isInitialized(existing, paths)) {
+  if (isInitialized(paths)) {
     printOutput(
       { ok: true, initialized: true, changed: false },
       Boolean(options.json),
@@ -45,11 +39,9 @@ async function runInit(options: { json?: boolean } = {}): Promise<void> {
   ensureDir(paths.snapshotsDir);
   ensureDir(paths.diffsDir);
   ensureDir(paths.requestsDir);
-  ensureDir(paths.extensionDir);
   ensureDir(paths.systemdDir);
 
   fs.writeFileSync(paths.configPath, renderConfigTs(config), "utf8");
-  const extensionFiles = await copyExtensionAssets(paths.extensionDir);
   const skillFiles = updateSkill(paths, config).updatedFiles;
   const systemdFiles = writeSystemdFiles(paths.systemdDir, paths.cwd).files;
   const initMessage = [
@@ -68,7 +60,6 @@ async function runInit(options: { json?: boolean } = {}): Promise<void> {
       ok: true,
       initialized: true,
       changed: true,
-      extensionFiles,
       skillFiles,
       requestsDir: paths.requestsDir,
       systemdDir: paths.systemdDir,

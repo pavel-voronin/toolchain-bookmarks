@@ -67,7 +67,6 @@ bun test
 
 - `./bookmarks`
 - `./config.ts`
-- `./extension/`
 - `./skills/bookmarks/`
 - `./systemd/`
 - `./snapshots/`
