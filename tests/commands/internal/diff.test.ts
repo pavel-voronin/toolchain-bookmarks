@@ -120,7 +120,7 @@ describe("internal diff command", () => {
     expect(diff3.event).toBeNull();
   });
 
-  test("prints yaml in human mode", () => {
+  test("prints human output in human mode", () => {
     const ctx = setupWorkspace();
     writeBookmarksFixture(ctx.runDir, false);
     runBookmarks(ctx.runDir, ["make-diff"]);

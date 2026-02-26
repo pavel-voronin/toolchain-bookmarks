@@ -1,5 +1,5 @@
 import { applyFields, applyModelDefaults, parseFields } from "./fields";
-import { renderHumanYaml } from "./render";
+import { renderHuman } from "./render";
 import { isCanonicalBookmarkNode } from "../types/canonical";
 import type { CanonicalBookmarkNode } from "../types/canonical";
 import { printOutput } from "../utils/print";
@@ -31,5 +31,5 @@ export function renderCommandResult(
         ? applyModelDefaults(result)
         : result;
 
-  printOutput({ ok: true, result: picked }, json, renderHumanYaml(picked));
+  printOutput({ ok: true, result: picked }, json, renderHuman(picked));
 }

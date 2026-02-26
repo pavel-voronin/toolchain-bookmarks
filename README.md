@@ -32,7 +32,7 @@ curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/m
 
 Output mode:
 
-- default: YAML (human-readable)
+- default: human
 - JSON: `-j` or `--json`
 - field selection (scenario/API): `-f id,title,url` or `--fields id,title,url`
 
