@@ -8,7 +8,7 @@ const DEFAULT_INSTALL_URL =
 function runUpdate(options: { json?: boolean } = {}): void {
   const installUrl =
     process.env.BOOKMARKS_INSTALL_SCRIPT_URL ?? DEFAULT_INSTALL_URL;
-  const cmd = `BOOKMARKS_INSTALL_SKIP_INIT=1 curl -fsSL ${installUrl} | sh && ./bookmarks init && ./bookmarks skill-update`;
+  const cmd = `curl -fsSL ${installUrl} | BOOKMARKS_INSTALL_SKIP_INIT=1 sh && ./bookmarks init && ./bookmarks skill-update`;
   const result = spawnSync("sh", ["-c", cmd], { stdio: "inherit" });
 
   if (result.status !== 0) {
