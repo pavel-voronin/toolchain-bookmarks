@@ -4,7 +4,10 @@ import { DEFAULT_CONFIG } from "./defaults";
 import type { AppPaths, RuntimeConfig } from "../types/config";
 
 export function resolvePaths(): AppPaths {
-  const runtimeRoot = path.dirname(process.execPath);
+  const cwdConfigPath = path.join(process.cwd(), "config.ts");
+  const runtimeRoot = fs.existsSync(cwdConfigPath)
+    ? process.cwd()
+    : path.dirname(process.execPath);
   return {
     cwd: runtimeRoot,
     configPath: path.join(runtimeRoot, "config.ts"),
