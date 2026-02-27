@@ -3,17 +3,18 @@ import path from "node:path";
 import { DEFAULT_CONFIG } from "./defaults";
 import type { AppPaths, RuntimeConfig } from "../types/config";
 
-export function resolvePaths(cwd = process.cwd()): AppPaths {
+export function resolvePaths(): AppPaths {
+  const runtimeRoot = path.dirname(process.execPath);
   return {
-    cwd,
-    configPath: path.join(cwd, "config.ts"),
-    skillDir: path.join(cwd, "skills", "bookmarks"),
-    systemdDir: path.join(cwd, "systemd"),
-    snapshotsDir: path.join(cwd, "snapshots"),
-    diffsDir: path.join(cwd, "diffs"),
-    stateDir: cwd,
-    stateFile: path.join(cwd, "state.json"),
-    requestsDir: path.join(cwd, "requests"),
+    cwd: runtimeRoot,
+    configPath: path.join(runtimeRoot, "config.ts"),
+    skillDir: path.join(runtimeRoot, "skills", "bookmarks"),
+    systemdDir: path.join(runtimeRoot, "systemd"),
+    snapshotsDir: path.join(runtimeRoot, "snapshots"),
+    diffsDir: path.join(runtimeRoot, "diffs"),
+    stateDir: runtimeRoot,
+    stateFile: path.join(runtimeRoot, "state.json"),
+    requestsDir: path.join(runtimeRoot, "requests"),
   };
 }
 
