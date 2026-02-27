@@ -18,13 +18,18 @@ export default function registerCreateCommand(cli: CAC): void {
         async (
           { api },
           options: {
-            parentId?: string;
-            title?: string;
-            url?: string;
-            index?: string;
+            parentId?: string | number;
+            title?: string | number;
+            url?: string | number;
+            index?: string | number;
           },
         ) => {
-          if (!options.parentId || !options.title) {
+          const parentId =
+            options.parentId === undefined ? undefined : String(options.parentId);
+          const title = options.title === undefined ? undefined : String(options.title);
+          const url = options.url === undefined ? undefined : String(options.url);
+
+          if (!parentId || !title) {
             fail(
               "Usage: bookmarks create --parent-id <id> --title <title> [--url <url>] [--index <n>]",
               2,
@@ -33,15 +38,15 @@ export default function registerCreateCommand(cli: CAC): void {
           const parsedIndex =
             options.index === undefined
               ? undefined
-              : Number.parseInt(options.index, 10);
+              : Number.parseInt(String(options.index), 10);
           if (parsedIndex !== undefined && !Number.isFinite(parsedIndex)) {
             fail("index must be an integer", 2);
           }
 
           return api.create({
-            parentId: options.parentId,
-            title: options.title,
-            url: options.url,
+            parentId,
+            title,
+            url,
             ...(parsedIndex !== undefined ? { index: parsedIndex } : {}),
           });
         },

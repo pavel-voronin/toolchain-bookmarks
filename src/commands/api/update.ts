@@ -16,9 +16,13 @@ export default function registerUpdateCommand(cli: CAC): void {
         async (
           { api },
           id: string,
-          options: { title?: string; url?: string },
+          options: { title?: string | number; url?: string | number },
         ) => {
-          if (!options.title && !options.url) {
+          const title =
+            options.title === undefined ? undefined : String(options.title);
+          const url = options.url === undefined ? undefined : String(options.url);
+
+          if (!title && !url) {
             fail(
               "Usage: bookmarks update <id> [--title <title>] [--url <url>]",
               2,
@@ -26,8 +30,8 @@ export default function registerUpdateCommand(cli: CAC): void {
           }
 
           return api.update(id, {
-            ...(options.title ? { title: options.title } : {}),
-            ...(options.url ? { url: options.url } : {}),
+            ...(title ? { title } : {}),
+            ...(url ? { url } : {}),
           });
         },
       ),

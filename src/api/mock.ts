@@ -118,6 +118,31 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+function readRequiredString(
+  payload: Record<string, unknown>,
+  field: string,
+): string {
+  const value = payload[field];
+  if (typeof value !== "string") {
+    throw new Error(`${field} must be a string`);
+  }
+  return value;
+}
+
+function readOptionalString(
+  payload: Record<string, unknown>,
+  field: string,
+): string | undefined {
+  const value = payload[field];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new Error(`${field} must be a string`);
+  }
+  return value;
+}
+
 function parseCreatePayload(args: unknown[]): {
   parentId: string;
   title: string;
@@ -125,10 +150,13 @@ function parseCreatePayload(args: unknown[]): {
   index?: number;
 } {
   const payload = (args[0] ?? {}) as Record<string, unknown>;
+  const parentId = readRequiredString(payload, "parentId");
+  const title = readRequiredString(payload, "title");
+  const url = readOptionalString(payload, "url");
   return {
-    parentId: String(payload.parentId ?? ""),
-    title: String(payload.title ?? ""),
-    ...(typeof payload.url === "string" ? { url: payload.url } : {}),
+    parentId,
+    title,
+    ...(url !== undefined ? { url } : {}),
     ...(typeof payload.index === "number" ? { index: payload.index } : {}),
   };
 }
@@ -140,10 +168,12 @@ function parseUpdatePayload(args: unknown[]): {
 } {
   const id = String(args[0] ?? "");
   const payload = (args[1] ?? {}) as Record<string, unknown>;
+  const title = readOptionalString(payload, "title");
+  const url = readOptionalString(payload, "url");
   return {
     id,
-    ...(typeof payload.title === "string" ? { title: payload.title } : {}),
-    ...(typeof payload.url === "string" ? { url: payload.url } : {}),
+    ...(title !== undefined ? { title } : {}),
+    ...(url !== undefined ? { url } : {}),
   };
 }
 
@@ -154,9 +184,10 @@ function parseMovePayload(args: unknown[]): {
 } {
   const id = String(args[0] ?? "");
   const payload = (args[1] ?? {}) as Record<string, unknown>;
+  const parentId = readRequiredString(payload, "parentId");
   return {
     id,
-    parentId: String(payload.parentId ?? ""),
+    parentId,
     ...(typeof payload.index === "number" ? { index: payload.index } : {}),
   };
 }

@@ -16,9 +16,11 @@ export default function registerMoveCommand(cli: CAC): void {
         async (
           { api },
           id: string,
-          options: { parentId?: string; index?: string },
+          options: { parentId?: string | number; index?: string | number },
         ) => {
-          if (!options.parentId) {
+          const parentId =
+            options.parentId === undefined ? undefined : String(options.parentId);
+          if (!parentId) {
             fail(
               "Usage: bookmarks move <id> --parent-id <id> [--index <n>]",
               2,
@@ -27,13 +29,13 @@ export default function registerMoveCommand(cli: CAC): void {
           const parsedIndex =
             options.index === undefined
               ? undefined
-              : Number.parseInt(options.index, 10);
+              : Number.parseInt(String(options.index), 10);
           if (parsedIndex !== undefined && !Number.isFinite(parsedIndex)) {
             fail("index must be an integer", 2);
           }
 
           return api.move(id, {
-            parentId: options.parentId,
+            parentId,
             ...(parsedIndex !== undefined ? { index: parsedIndex } : {}),
           });
         },
