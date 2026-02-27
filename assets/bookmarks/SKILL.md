@@ -47,17 +47,48 @@ API:
 
 ## Findings & Settings (must update)
 
-- `inbox_required`: `yes` or `no`
+- Update this section in every session when new stable findings appear.
+- Save every user-important folder that was discovered during work (not only inbox).
+- Reuse saved folder ids first to avoid repeated search and extra token/time cost.
+
+Fields:
+
+- `inbox_required`: `yes` or `no` or `unknown`
+- `inbox_folder_name`: user-provided name or `none`
 - `inbox_folder_id`: selected folder id or `none`
+- `important_folders`: list of objects with:
+  - `purpose`: why user needs this folder (for example `articles`, `reading_queue`, `work_docs`)
+  - `folder_id`
+  - `folder_title`
+  - `folder_path`
+  - `confidence`: `high` or `medium` (based on explicit user confirmation)
+  - `last_confirmed_at`: ISO timestamp
 - `notes`: short context and last check result
+
+Update policy:
+
+1. Before searching folders, check whether `important_folders` already has a matching purpose.
+2. When you discover a new important folder (for move/create/find tasks), add it immediately.
+3. When user corrects mapping, overwrite previous record and mark old value as obsolete in `notes`.
+4. Keep only relevant current mappings; remove stale or ambiguous entries.
+5. Never leave this section outdated after task completion.
 
 ### Inbox setup flow
 
-1. Ask user whether an `inbox` folder is needed for this workflow.
-2. If user says `no`, set `inbox_required: no` and `inbox_folder_id: none`.
-3. If user says `yes`, find candidates with:
-   - `search Inbox`
-   - `search inbox`
-   - optional fallback: `get-tree` only if search is ambiguous.
+1. Ask user: does inbox workflow exist, and what is the actual folder name (if any)?
+2. If user says there is no inbox workflow, set:
+   - `inbox_required: no`
+   - `inbox_folder_name: none`
+   - `inbox_folder_id: none`
+3. If user needs inbox workflow:
+   - ask for expected inbox folder name;
+   - search by that name (`search <name>`);
+   - if name is unknown, ask whether to try common names and then search.
 4. If multiple candidates are found, show options with `id` and `path`, then ask user to choose one.
-5. Save the chosen id in this section as `inbox_folder_id`.
+5. If no candidate is found, ask whether to create inbox folder now:
+   - if yes, create it in user-chosen parent and save new id;
+   - if no, mark inbox as unresolved in `notes`.
+6. Save confirmed inbox folder in both:
+   - `inbox_folder_*` fields;
+   - `important_folders` with purpose `inbox`.
+7. One-time rule: after inbox setup is finished and values are persisted, delete this `Inbox setup flow` section from the skill so it no longer appears in future prompts.
