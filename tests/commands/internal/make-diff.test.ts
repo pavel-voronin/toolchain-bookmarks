@@ -18,7 +18,7 @@ describe("internal make-diff command", () => {
     expect(payload.wroteDiff).toBe(false);
   });
 
-  test("writes one diff file per inbox creation event", () => {
+  test("writes one diff file per creation event", () => {
     const ctx = setupWorkspace();
     writeBookmarksFixture(ctx.runDir, false);
     runBookmarks(ctx.runDir, ["make-diff", "--json"]);
@@ -117,7 +117,7 @@ describe("internal make-diff command", () => {
     expect(result.code).toBe(0);
     const payload = JSON.parse(result.stdout);
     expect(payload.wroteDiff).toBe(true);
-    expect(payload.eventCount).toBe(3);
+    expect(payload.eventCount).toBe(5);
 
     const diffFiles = fs
       .readdirSync(path.join(ctx.runDir, "diffs"))
@@ -127,6 +127,8 @@ describe("internal make-diff command", () => {
       "000000000001.json",
       "000000000002.json",
       "000000000003.json",
+      "000000000004.json",
+      "000000000005.json",
     ]);
 
     const eventTypes = new Set<string>();
@@ -137,7 +139,7 @@ describe("internal make-diff command", () => {
       eventTypes.add(doc.event.type);
       expect(["link", "folder"]).toContain(doc.event.payload.type);
     }
-    expect(eventTypes.has("link_created_in_inbox")).toBe(true);
-    expect(eventTypes.has("folder_created_in_inbox")).toBe(true);
+    expect(eventTypes.has("link_created")).toBe(true);
+    expect(eventTypes.has("folder_created")).toBe(true);
   });
 });

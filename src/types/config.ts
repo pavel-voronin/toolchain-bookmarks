@@ -1,7 +1,6 @@
 export type RuntimeConfig = {
   BOOKMARKS_FILE: string;
   CDP_HTTP: string;
-  INBOX_FOLDER_ID: string;
 };
 
 export type AppPaths = {

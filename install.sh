@@ -5,17 +5,12 @@ set -eu
 
 # REPO_TARBALL: Override source tarball URL/path used by installer.
 # BOOKMARKS_WIZARD_INTERACTIVE: Set to 0 to disable interactive prompts.
-# BOOKMARKS_SKIP_BOOKMARKS_FILE_CHECK: Set to 1 to skip BOOKMARKS_FILE existence checks.
-# BOOKMARKS_FILE: Absolute/relative path to Chrome Bookmarks JSON.
 # CDP_HTTP: Chrome DevTools HTTP endpoint (for example http://127.0.0.1:9222).
-# INBOX_FOLDER_NAME: Folder name used to search Inbox candidates (default: Inbox).
-# INBOX_FOLDER_ID: Force Inbox folder ID and skip candidate selection.
 
 # Installation source and defaults.
 REPO_TARBALL="${REPO_TARBALL:-https://codeload.github.com/pavel-voronin/toolchain-bookmarks/tar.gz/refs/heads/main}"
 DEFAULT_CDP_HTTP="http://127.0.0.1:9222"
 DEFAULT_BOOKMARKS_FILE="${HOME:-}/.chrome-headless-profile/Default/Bookmarks"
-INBOX_QUERY="Inbox"
 
 TARGET_DIR="$(pwd)"
 TMP_DIR="$(mktemp -d)"
@@ -23,7 +18,6 @@ ARCHIVE="$TMP_DIR/repo.tar.gz"
 SRC_DIR=""
 STAGED_BIN="$TMP_DIR/bookmarks"
 INTERACTIVE="1"
-INBOX_FOLDER_PATH_UI=""
 SUPPORTED_COMPLETION_SHELLS="zsh"
 
 RESET_STYLE=""
@@ -31,14 +25,8 @@ WHITE_BOLD_STYLE=""
 PINK_STYLE=""
 
 # Track env override presence (including explicit empty values).
-HAS_ENV_BOOKMARKS_FILE="0"
 HAS_ENV_CDP_HTTP="0"
-HAS_ENV_INBOX_FOLDER_ID="0"
-HAS_ENV_INBOX_FOLDER_NAME="0"
-if [ "${BOOKMARKS_FILE+x}" = "x" ]; then HAS_ENV_BOOKMARKS_FILE="1"; fi
 if [ "${CDP_HTTP+x}" = "x" ]; then HAS_ENV_CDP_HTTP="1"; fi
-if [ "${INBOX_FOLDER_ID+x}" = "x" ]; then HAS_ENV_INBOX_FOLDER_ID="1"; fi
-if [ "${INBOX_FOLDER_NAME+x}" = "x" ]; then HAS_ENV_INBOX_FOLDER_NAME="1"; fi
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -199,39 +187,8 @@ prompt_select() {
 }
 
 print_preview_block() {
-  bookmarks_file="$1"
-  cdp_http="$2"
-  inbox_folder_id="$3"
-  inbox_folder_path="$4"
+  cdp_http="$1"
   bar="▓"
-
-  if [ -z "$inbox_folder_path" ] && [ -n "$inbox_folder_id" ] && [ -f "$bookmarks_file" ] && command -v jq >/dev/null 2>&1; then
-    # Resolve path lazily for UI preview to avoid subshell state issues.
-    inbox_folder_path="$(jq -r --arg id "$inbox_folder_id" '
-      def walk($parent):
-        . as $n
-        | ($n.name // $n.title // "") as $title
-        | ($n.id // "") as $nid
-        | ($n.url // null) as $url
-        | ($parent + "/" + $title) as $path
-        | (if ($nid != "" and $title != "" and $url == null) then [{id: $nid, path: $path}] else [] end)
-          + ((.children // []) | map(walk($path)) | add // []);
-      [
-        .roots
-        | to_entries[] as $r
-        | ($r.key) as $k
-        | ($r.value) as $root
-        | (if $k == "bookmark_bar" then "Bookmarks Bar"
-           elif $k == "other" then "Other Bookmarks"
-           elif $k == "synced" then "Mobile Bookmarks"
-           else ($root.name // $root.title // $k) end) as $root_title
-        | (($root.children // []) | map(walk("/" + $root_title)) | add // [])
-      ]
-      | add // []
-      | map(select(.id == $id))
-      | .[0].path // ""
-    ' "$bookmarks_file" 2>/dev/null || true)"
-  fi
 
   log ""
   if [ "$INTERACTIVE" = "1" ]; then
@@ -240,56 +197,13 @@ print_preview_block() {
     log "$bar Configuration preview"
   fi
   log "$bar"
-  log "$bar BOOKMARKS_FILE: $bookmarks_file"
+  log "$bar BOOKMARKS_FILE: $DEFAULT_BOOKMARKS_FILE"
   log "$bar CDP_HTTP: $cdp_http"
-  if [ -n "$inbox_folder_id" ]; then
-    if [ -n "$inbox_folder_path" ]; then
-      log "$bar INBOX_FOLDER_ID: $inbox_folder_id ($inbox_folder_path)"
-    else
-      log "$bar INBOX_FOLDER_ID: $inbox_folder_id"
-    fi
-  else
-    log "$bar INBOX_FOLDER_ID: <empty>"
-  fi
 }
 
 is_cdp_reachable() {
   endpoint="$1"
   curl -fsS --max-time 2 "$endpoint/json/version" >/dev/null 2>&1
-}
-
-is_integer() {
-  value="$1"
-  printf '%s' "$value" | grep -Eq '^[0-9]+$'
-}
-
-should_validate_bookmarks_file() {
-  [ "${BOOKMARKS_SKIP_BOOKMARKS_FILE_CHECK:-0}" != "1" ]
-}
-
-resolve_bookmarks_file() {
-  if [ "$HAS_ENV_BOOKMARKS_FILE" = "1" ]; then
-    if should_validate_bookmarks_file && [ ! -f "$BOOKMARKS_FILE" ]; then
-      die "BOOKMARKS_FILE does not exist: $BOOKMARKS_FILE"
-    fi
-    printf '%s\n' "$BOOKMARKS_FILE"
-    return 0
-  fi
-
-  if [ -f "$DEFAULT_BOOKMARKS_FILE" ]; then
-    printf '%s\n' "$DEFAULT_BOOKMARKS_FILE"
-    return 0
-  fi
-
-  [ "$INTERACTIVE" = "1" ] || die "BOOKMARKS_FILE is required in non-interactive mode"
-  while true; do
-    picked="$(prompt_input "Path to Bookmarks JSON file" "$DEFAULT_BOOKMARKS_FILE")"
-    if [ -f "$picked" ] || ! should_validate_bookmarks_file; then
-      printf '%s\n' "$picked"
-      return 0
-    fi
-    log_error "File not found: $picked"
-  done
 }
 
 resolve_cdp_http() {
@@ -313,150 +227,13 @@ resolve_cdp_http() {
   done
 }
 
-resolve_inbox_folder_name() {
-  if [ "$HAS_ENV_INBOX_FOLDER_NAME" = "1" ]; then
-    printf '%s\n' "$INBOX_FOLDER_NAME"
-    return 0
-  fi
-
-  [ "$INTERACTIVE" = "1" ] || {
-    printf '%s\n' "$INBOX_QUERY"
-    return 0
-  }
-
-  prompt_input "Inbox folder name" "$INBOX_QUERY"
-}
-
-collect_inbox_candidates() {
-  bookmarks_file="$1"
-  query="$2"
-  query_lc="$(printf '%s' "$query" | tr '[:upper:]' '[:lower:]')"
-
-  jq -r --arg q "$query_lc" '
-    def walk($parent):
-      . as $n
-      | ($n.name // $n.title // "") as $title
-      | ($n.id // "") as $id
-      | ($n.url // null) as $url
-      | ($parent + "/" + $title) as $path
-      | (if ($id != "" and $title != "" and $url == null)
-           then [{id: $id, title: $title, path: $path, norm: ($title | ascii_downcase)}]
-           else [] end)
-        + ((.children // []) | map(walk($path)) | add // []);
-
-    [
-      .roots
-      | to_entries[] as $r
-      | ($r.key) as $k
-      | ($r.value) as $root
-      | (if $k == "bookmark_bar" then "Bookmarks Bar"
-         elif $k == "other" then "Other Bookmarks"
-         elif $k == "synced" then "Mobile Bookmarks"
-         else ($root.name // $root.title // $k) end) as $root_title
-      | (($root.children // []) | map(walk("/" + $root_title)) | add // [])
-    ]
-    | add // []
-    | (map(select(.norm == $q)) as $exact
-      | if ($exact | length) > 0 then $exact else map(select(.norm | contains($q))) end)
-    | .[]
-    | [.id, .title, .path]
-    | @tsv
-  ' "$bookmarks_file" 2>/dev/null || true
-}
-
-resolve_inbox_folder_id() {
-  bookmarks_file="$1"
-  inbox_folder_name="$2"
-  INBOX_FOLDER_PATH_UI=""
-
-  candidates_file="$TMP_DIR/inbox_candidates.tsv"
-  if [ -f "$bookmarks_file" ]; then
-    collect_inbox_candidates "$bookmarks_file" "$inbox_folder_name" > "$candidates_file"
-  else
-    : > "$candidates_file"
-  fi
-
-  if [ ! -f "$bookmarks_file" ]; then
-    if [ "$HAS_ENV_INBOX_FOLDER_ID" = "1" ]; then
-      is_integer "$INBOX_FOLDER_ID" || die "INBOX_FOLDER_ID must be an integer when bookmarks file is missing"
-      printf '%s\n' "$INBOX_FOLDER_ID"
-      return 0
-    fi
-
-    [ "$INTERACTIVE" = "1" ] || {
-      printf '\n'
-      return 0
-    }
-
-    while true; do
-      manual_id="$(prompt_input "INBOX_FOLDER_ID (integer, empty to skip)" "")"
-      if [ -z "$manual_id" ]; then
-        printf '\n'
-        return 0
-      fi
-      if is_integer "$manual_id"; then
-        printf '%s\n' "$manual_id"
-        return 0
-      fi
-      log_error "Invalid INBOX_FOLDER_ID: $manual_id"
-    done
-  fi
-
-  if [ "$HAS_ENV_INBOX_FOLDER_ID" = "1" ]; then
-    INBOX_FOLDER_PATH_UI="$(awk -F "$(printf '\t')" -v id="$INBOX_FOLDER_ID" '$1 == id { print $3; exit }' "$candidates_file" || true)"
-    printf '%s\n' "$INBOX_FOLDER_ID"
-    return 0
-  fi
-
-  count="$(grep -c . "$candidates_file" || true)"
-
-  if [ "$count" -eq 0 ]; then
-    printf '\n'
-    return 0
-  fi
-
-  if [ "$count" -eq 1 ]; then
-    INBOX_FOLDER_PATH_UI="$(cut -f3 "$candidates_file")"
-    cut -f1 "$candidates_file"
-    return 0
-  fi
-
-  [ "$INTERACTIVE" = "1" ] || die "multiple Inbox candidates found; set INBOX_FOLDER_ID in non-interactive mode"
-
-  map_file="$TMP_DIR/inbox_map.tsv"
-  : > "$map_file"
-
-  # Build human-readable choices and label->id map.
-  set --
-  while IFS="$(printf '\t')" read -r id title path; do
-    label="$path"
-    printf '%s\t%s\n' "$label" "$id" >> "$map_file"
-    set -- "$@" "$label"
-  done < "$candidates_file"
-  set -- "$@" "Skip (no Inbox)"
-
-  selected="$(prompt_select "Select Inbox folder" "$@")"
-  if [ "$selected" = "Skip (no Inbox)" ]; then
-    printf '\n'
-    return 0
-  fi
-
-  INBOX_FOLDER_PATH_UI="$selected"
-  picked_id="$(awk -F "$(printf '\t')" -v key="$selected" '$1 == key { print $2; exit }' "$map_file")"
-  [ -n "$picked_id" ] || die "failed to resolve selected Inbox folder"
-  printf '%s\n' "$picked_id"
-}
-
 render_config_ts() {
-  file="$1"
-  cdp="$2"
-  inbox_id="$3"
+  cdp="$1"
 
   cat > "$TARGET_DIR/config.ts" <<EOF
 export const config = {
-  "BOOKMARKS_FILE": "${file}",
-  "CDP_HTTP": "${cdp}",
-  "INBOX_FOLDER_ID": "${inbox_id}"
+  "BOOKMARKS_FILE": "${DEFAULT_BOOKMARKS_FILE}",
+  "CDP_HTTP": "${cdp}"
 } as const;
 
 export default config;
@@ -519,7 +296,6 @@ _bookmarks() {
     'diff:read next diff event'
     'request:write missing scenario request'
     'repl:start interactive shell'
-    'inbox:list links from Inbox folder'
     'get:get bookmarks by ids'
     'get-children:get direct children of folder'
     'get-recent:get recent bookmarks'
@@ -565,7 +341,7 @@ _bookmarks() {
             '(-j --json)'{-j,--json}'[JSON output by default in REPL]' \
             '(-H --human)'{-H,--human}'[Human output by default in REPL]'
           ;;
-        inbox|get-tree|ping)
+        get-tree|ping)
           _arguments \
             '(-j --json)'{-j,--json}'[JSON output]' \
             '(-H --human)'{-H,--human}'[Human output]' \
@@ -786,11 +562,9 @@ handle_systemd_post_install() {
 }
 
 apply_install() {
-  bookmarks_file="$1"
-  cdp_http="$2"
-  inbox_folder_id="$3"
+  cdp_http="$1"
 
-  run_step "Writing configuration" render_config_ts "$bookmarks_file" "$cdp_http" "$inbox_folder_id"
+  run_step "Writing configuration" render_config_ts "$cdp_http"
   run_step "Preparing runtime layout" ensure_runtime_layout
   run_step "Generating systemd files" write_systemd_files
   run_step "Installing binary" install_binary
@@ -807,48 +581,23 @@ apply_install() {
 }
 
 confirm_and_apply() {
-  bookmarks_file="$1"
-  cdp_http="$2"
-  inbox_folder_id="$3"
+  cdp_http="$1"
 
   while true; do
-    print_preview_block "$bookmarks_file" "$cdp_http" "$inbox_folder_id" "$INBOX_FOLDER_PATH_UI"
+    print_preview_block "$cdp_http"
 
     choice="$(prompt_select "Review setup" \
       "Apply" \
-      "Edit BOOKMARKS_FILE" \
       "Edit CDP_HTTP" \
-      "Edit INBOX_FOLDER_ID" \
       "Cancel installation")"
 
     case "$choice" in
       "Apply")
-        apply_install "$bookmarks_file" "$cdp_http" "$inbox_folder_id"
+        apply_install "$cdp_http"
         return 0
-        ;;
-      "Edit BOOKMARKS_FILE")
-        bookmarks_file="$(prompt_input "Path to Bookmarks JSON file" "$bookmarks_file")"
-        if should_validate_bookmarks_file && [ ! -f "$bookmarks_file" ]; then
-          die "BOOKMARKS_FILE does not exist: $bookmarks_file"
-        fi
-        if [ -f "$bookmarks_file" ]; then
-          inbox_folder_name="$(resolve_inbox_folder_name)"
-        else
-          inbox_folder_name=""
-        fi
-        inbox_folder_id="$(resolve_inbox_folder_id "$bookmarks_file" "$inbox_folder_name")"
         ;;
       "Edit CDP_HTTP")
         cdp_http="$(prompt_input "CDP HTTP endpoint" "$cdp_http")"
-        ;;
-      "Edit INBOX_FOLDER_ID")
-        HAS_ENV_INBOX_FOLDER_ID="0"
-        if [ -f "$bookmarks_file" ]; then
-          inbox_folder_name="$(resolve_inbox_folder_name)"
-        else
-          inbox_folder_name=""
-        fi
-        inbox_folder_id="$(resolve_inbox_folder_id "$bookmarks_file" "$inbox_folder_name")"
         ;;
       "Cancel installation")
         die "installation canceled by user"
@@ -862,21 +611,13 @@ confirm_and_apply() {
 
 run_install_wizard() {
   cdp_http="$(resolve_cdp_http)"
-  bookmarks_file="$(resolve_bookmarks_file)"
-  if [ -f "$bookmarks_file" ]; then
-    require_cmd jq
-    inbox_folder_name="$(resolve_inbox_folder_name)"
-  else
-    inbox_folder_name=""
-  fi
-  inbox_folder_id="$(resolve_inbox_folder_id "$bookmarks_file" "$inbox_folder_name")"
 
   if [ "$INTERACTIVE" = "1" ]; then
-    confirm_and_apply "$bookmarks_file" "$cdp_http" "$inbox_folder_id"
+    confirm_and_apply "$cdp_http"
     return 0
   fi
 
-  apply_install "$bookmarks_file" "$cdp_http" "$inbox_folder_id"
+  apply_install "$cdp_http"
 }
 
 # Decide whether interactive mode is allowed.

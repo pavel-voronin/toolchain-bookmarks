@@ -19,10 +19,8 @@ function splitCommandSections(body: string): Array<HelpSection> {
     "diff",
     "request <description...>",
   ]);
-  const scenarioNames = new Set(["inbox"]);
 
   const internal: string[] = [];
-  const scenarios: string[] = [];
   const api: string[] = [];
 
   for (const line of lines) {
@@ -31,19 +29,12 @@ function splitCommandSections(body: string): Array<HelpSection> {
       internal.push(line);
       continue;
     }
-    if (scenarioNames.has(name)) {
-      scenarios.push(line);
-      continue;
-    }
     api.push(line);
   }
 
   const sections: HelpSection[] = [];
   if (internal.length > 0) {
     sections.push({ title: "Internal Commands", body: internal.join("\n") });
-  }
-  if (scenarios.length > 0) {
-    sections.push({ title: "Scenario Commands", body: scenarios.join("\n") });
   }
   if (api.length > 0) {
     sections.push({ title: "API Commands", body: api.join("\n") });

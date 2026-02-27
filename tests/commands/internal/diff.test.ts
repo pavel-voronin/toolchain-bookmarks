@@ -113,8 +113,8 @@ describe("internal diff command", () => {
     expect(diff1.event).not.toBeNull();
     expect(diff2.event).not.toBeNull();
     expect(diff1.event.id).not.toBe(diff2.event.id);
-    expect(diff1.event.event.type).toBe("link_created_in_inbox");
-    expect(diff2.event.event.type).toBe("link_created_in_inbox");
+    expect(diff1.event.event.type).toBe("link_created");
+    expect(diff2.event.event.type).toBe("link_created");
     expect(diff1.event.event.payload.type).toBe("link");
     expect(diff2.event.event.payload.type).toBe("link");
     expect(diff3.event).toBeNull();
@@ -131,6 +131,6 @@ describe("internal diff command", () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("schema_version: 1");
     expect(result.stdout).toContain("event:");
-    expect(result.stdout).toContain("type: link_created_in_inbox");
+    expect(result.stdout).toContain("type: link_created");
   });
 });

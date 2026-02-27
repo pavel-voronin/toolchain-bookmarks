@@ -1,7 +1,7 @@
-import type { FolderCreatedInInboxEvent } from "../diff/events/folder-created-in-inbox";
-import type { LinkCreatedInInboxEvent } from "../diff/events/link-created-in-inbox";
+import type { FolderCreatedEvent } from "../diff/events/folder-created";
+import type { LinkCreatedEvent } from "../diff/events/link-created";
 
-export type DiffEvent = LinkCreatedInInboxEvent | FolderCreatedInInboxEvent;
+export type DiffEvent = LinkCreatedEvent | FolderCreatedEvent;
 
 export type DiffDocument = {
   schema_version: 1;

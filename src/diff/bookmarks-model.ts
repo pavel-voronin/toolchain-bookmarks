@@ -106,9 +106,3 @@ export function normalizeBookmarks(input: unknown): Map<string, FlatNode> {
 
   return out;
 }
-
-export function isInboxNode(node: FlatNode, config: RuntimeConfig): boolean {
-  return (
-    Boolean(config.INBOX_FOLDER_ID) && node.folderId === config.INBOX_FOLDER_ID
-  );
-}

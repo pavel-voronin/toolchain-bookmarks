@@ -131,7 +131,6 @@ export function runInstall(
   return runCmd("sh", [path.join(REPO_ROOT, "install.sh")], runDir, {
     REPO_TARBALL: tarball,
     BOOKMARKS_WIZARD_INTERACTIVE: "0",
-    BOOKMARKS_FILE: installBookmarks,
     CDP_HTTP: "http://127.0.0.1:9222",
     ...envOverrides,
   });
@@ -173,7 +172,6 @@ export function setupWorkspace(): {
     {
       BOOKMARKS_FILE: "./bookmarks.json",
       CDP_HTTP: "http://127.0.0.1:9222",
-      INBOX_FOLDER_ID: "",
     },
     null,
     2,
@@ -323,7 +321,6 @@ export function writeBookmarksFixture(
     {
       BOOKMARKS_FILE: "./bookmarks.json",
       CDP_HTTP: "http://127.0.0.1:9222",
-      INBOX_FOLDER_ID: "10",
     },
     null,
     2,

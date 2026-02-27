@@ -1,10 +1,8 @@
 import type { CanonicalLinkNode } from "../../types/canonical";
 import type { FlatNode } from "../../types/bookmarks";
-import type { RuntimeConfig } from "../../types/config";
-import { isInboxNode } from "../bookmarks-model";
 
-export type LinkCreatedInInboxEvent = {
-  type: "link_created_in_inbox";
+export type LinkCreatedEvent = {
+  type: "link_created";
   payload: CanonicalLinkNode;
 };
 
@@ -20,20 +18,19 @@ function toCanonicalLink(node: FlatNode): CanonicalLinkNode {
   };
 }
 
-export function collectLinkCreatedInInboxEvents(
+export function collectLinkCreatedEvents(
   prev: Map<string, FlatNode>,
   curr: Map<string, FlatNode>,
-  config: RuntimeConfig,
-): LinkCreatedInInboxEvent[] {
-  const events: LinkCreatedInInboxEvent[] = [];
+): LinkCreatedEvent[] {
+  const events: LinkCreatedEvent[] = [];
 
   for (const [id, node] of curr) {
-    if (node.type !== "link" || prev.has(id) || !isInboxNode(node, config)) {
+    if (node.type !== "link" || prev.has(id)) {
       continue;
     }
 
     events.push({
-      type: "link_created_in_inbox",
+      type: "link_created",
       payload: toCanonicalLink(node),
     });
   }

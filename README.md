@@ -50,10 +50,6 @@ REPL defaults:
 bun test
 ```
 
-### Scenarios
-
-- `./bookmarks inbox`
-
 ### API aliases (simplified)
 
 - `./bookmarks get <id...>`

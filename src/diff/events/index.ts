@@ -1,16 +1,16 @@
 import type { FlatNode } from "../../types/bookmarks";
 import type { RuntimeConfig } from "../../types/config";
 import type { DiffEvent } from "../../types/diff";
-import { collectFolderCreatedInInboxEvents } from "./folder-created-in-inbox";
-import { collectLinkCreatedInInboxEvents } from "./link-created-in-inbox";
+import { collectFolderCreatedEvents } from "./folder-created";
+import { collectLinkCreatedEvents } from "./link-created";
 
 export function buildEvents(
   prev: Map<string, FlatNode>,
   curr: Map<string, FlatNode>,
-  config: RuntimeConfig,
+  _config: RuntimeConfig,
 ): DiffEvent[] {
   return [
-    ...collectLinkCreatedInInboxEvents(prev, curr, config),
-    ...collectFolderCreatedInInboxEvents(prev, curr, config),
+    ...collectLinkCreatedEvents(prev, curr),
+    ...collectFolderCreatedEvents(prev, curr),
   ];
 }

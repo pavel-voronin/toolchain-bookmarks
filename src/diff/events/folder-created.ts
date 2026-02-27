@@ -1,10 +1,8 @@
 import type { CanonicalFolderNode } from "../../types/canonical";
 import type { FlatNode } from "../../types/bookmarks";
-import type { RuntimeConfig } from "../../types/config";
-import { isInboxNode } from "../bookmarks-model";
 
-export type FolderCreatedInInboxEvent = {
-  type: "folder_created_in_inbox";
+export type FolderCreatedEvent = {
+  type: "folder_created";
   payload: CanonicalFolderNode;
 };
 
@@ -19,20 +17,19 @@ function toCanonicalFolder(node: FlatNode): CanonicalFolderNode {
   };
 }
 
-export function collectFolderCreatedInInboxEvents(
+export function collectFolderCreatedEvents(
   prev: Map<string, FlatNode>,
   curr: Map<string, FlatNode>,
-  config: RuntimeConfig,
-): FolderCreatedInInboxEvent[] {
-  const events: FolderCreatedInInboxEvent[] = [];
+): FolderCreatedEvent[] {
+  const events: FolderCreatedEvent[] = [];
 
   for (const [id, node] of curr) {
-    if (node.type !== "folder" || prev.has(id) || !isInboxNode(node, config)) {
+    if (node.type !== "folder" || prev.has(id)) {
       continue;
     }
 
     events.push({
-      type: "folder_created_in_inbox",
+      type: "folder_created",
       payload: toCanonicalFolder(node),
     });
   }
