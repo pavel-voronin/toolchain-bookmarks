@@ -11,7 +11,7 @@ describe("runtime root resolution", () => {
 
     const result = runCmd(
       ctx.bookmarksBin,
-      ["inbox-links", "--json"],
+      ["inbox", "--json"],
       otherDir,
       {
         BOOKMARKS_API_MOCK_FILE: path.join(ctx.runDir, "install-bookmarks.json"),

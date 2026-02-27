@@ -19,7 +19,7 @@ function splitCommandSections(body: string): Array<HelpSection> {
     "diff",
     "request <description...>",
   ]);
-  const scenarioNames = new Set(["inbox-links"]);
+  const scenarioNames = new Set(["inbox"]);
 
   const internal: string[] = [];
   const scenarios: string[] = [];

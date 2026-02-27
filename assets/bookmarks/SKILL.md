@@ -26,7 +26,7 @@ Run all commands below as: `{{BOOKMARKS_BIN}} <command> [args]`.
 
 Scenarios:
 
-- `inbox-links` - Get configured inbox subtree.
+- `inbox` - Get configured inbox subtree.
 
 API:
 

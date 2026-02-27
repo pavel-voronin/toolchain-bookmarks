@@ -3,9 +3,9 @@ import { withAction } from "../action";
 import { loadConfig, resolvePaths } from "../../config/runtime";
 import { fail } from "../../utils/print";
 
-export default function registerInboxLinksCommand(cli: CAC): void {
+export default function registerInboxCommand(cli: CAC): void {
   cli
-    .command("inbox-links", "Get configured inbox subtree")
+    .command("inbox", "Get configured inbox subtree")
     .option("-j, --json", "JSON output")
     .option("-f, --fields <fields>", "Comma-separated output fields", {
       default: "id,title,type,url,path,children,parentId,index",

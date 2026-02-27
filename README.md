@@ -52,7 +52,7 @@ bun test
 
 ### Scenarios
 
-- `./bookmarks inbox-links`
+- `./bookmarks inbox`
 
 ### API aliases (simplified)
 

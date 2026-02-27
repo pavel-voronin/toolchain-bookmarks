@@ -10,7 +10,7 @@ import registerMakeDiffCommand from "./commands/internal/make-diff";
 import registerDiffCommand from "./commands/internal/diff";
 import registerRequestCommand from "./commands/internal/request";
 import registerReplCommand from "./commands/internal/repl";
-import registerInboxLinksCommand from "./commands/scenarios/inbox-links";
+import registerInboxCommand from "./commands/scenarios/inbox";
 import registerGetCommand from "./commands/api/get";
 import registerGetChildrenCommand from "./commands/api/get-children";
 import registerGetRecentCommand from "./commands/api/get-recent";
@@ -39,7 +39,7 @@ registerDiffCommand(cli);
 registerRequestCommand(cli);
 registerReplCommand(cli);
 
-registerInboxLinksCommand(cli);
+registerInboxCommand(cli);
 
 registerGetCommand(cli);
 registerGetChildrenCommand(cli);

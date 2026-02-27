@@ -519,7 +519,7 @@ _bookmarks() {
     'diff:read next diff event'
     'request:write missing scenario request'
     'repl:start interactive shell'
-    'inbox-links:list links from Inbox folder'
+    'inbox:list links from Inbox folder'
     'get:get bookmarks by ids'
     'get-children:get direct children of folder'
     'get-recent:get recent bookmarks'
@@ -565,7 +565,7 @@ _bookmarks() {
             '(-j --json)'{-j,--json}'[JSON output by default in REPL]' \
             '(-H --human)'{-H,--human}'[Human output by default in REPL]'
           ;;
-        inbox-links|get-tree|ping)
+        inbox|get-tree|ping)
           _arguments \
             '(-j --json)'{-j,--json}'[JSON output]' \
             '(-H --human)'{-H,--human}'[Human output]' \

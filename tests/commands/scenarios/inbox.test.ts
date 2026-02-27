@@ -5,12 +5,12 @@ import {
   writeBookmarksFixture,
 } from "../../helpers/workspace";
 
-describe("scenario inbox-links command", () => {
+describe("scenario inbox command", () => {
   test("runs successfully", () => {
     const ctx = setupWorkspace();
     writeBookmarksFixture(ctx.runDir, true);
 
-    const result = runBookmarks(ctx.runDir, ["inbox-links", "--json"]);
+    const result = runBookmarks(ctx.runDir, ["inbox", "--json"]);
     expect(result.code).toBe(0);
   });
 });
