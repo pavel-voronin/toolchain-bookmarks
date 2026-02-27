@@ -9,6 +9,7 @@ import registerUpdateCommand from "./commands/internal/update";
 import registerMakeDiffCommand from "./commands/internal/make-diff";
 import registerDiffCommand from "./commands/internal/diff";
 import registerRequestCommand from "./commands/internal/request";
+import registerReplCommand from "./commands/internal/repl";
 import registerInboxLinksCommand from "./commands/scenarios/inbox-links";
 import registerGetCommand from "./commands/api/get";
 import registerGetChildrenCommand from "./commands/api/get-children";
@@ -23,10 +24,12 @@ import registerRemoveCommand from "./commands/api/remove";
 import registerRemoveTreeCommand from "./commands/api/remove-tree";
 import registerPingCommand from "./commands/api/ping";
 import { formatHelpSections } from "./help";
+import { parseReplStartupOptions, startRepl } from "./repl";
 
 const cli = cac("bookmarks");
 cli.help(formatHelpSections);
 cli.version(version);
+cli.option("-H, --human", "Force human output for current command");
 
 registerDoctorCommand(cli);
 registerSkillUpdateCommand(cli);
@@ -34,6 +37,7 @@ registerUpdateCommand(cli);
 registerMakeDiffCommand(cli);
 registerDiffCommand(cli);
 registerRequestCommand(cli);
+registerReplCommand(cli);
 
 registerInboxLinksCommand(cli);
 
@@ -51,8 +55,11 @@ registerRemoveTreeCommand(cli);
 registerPingCommand(cli);
 
 const startupArgs = process.argv.slice(2);
-if (startupArgs.length === 0) {
-  cli.outputHelp();
+const startup = parseReplStartupOptions(startupArgs);
+if (startup.shouldStartRepl) {
+  await startRepl(cli, {
+    defaultJson: startup.defaultJson,
+  });
   process.exit(0);
 }
 

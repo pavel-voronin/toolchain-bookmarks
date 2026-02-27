@@ -23,6 +23,8 @@ curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/m
 
 ## Commands
 
+- `./bookmarks` (starts interactive REPL)
+- `./bookmarks repl`
 - `./bookmarks doctor`
 - `./bookmarks skill-update`
 - `./bookmarks self-update`
@@ -35,6 +37,12 @@ Output mode:
 - default: human
 - JSON: `-j` or `--json`
 - field selection (scenario/API): `-f id,title,url` or `--fields id,title,url`
+
+REPL defaults:
+
+- `./bookmarks -j` (start REPL with JSON output by default)
+- `./bookmarks repl -j`
+- inside REPL: add `-H` or `--human` on a command to force human output
 
 ## Tests
 

@@ -1,4 +1,5 @@
 import { logCommandError } from "./errors";
+import { CommandFailure, isInteractiveMode } from "../runtime/interactive";
 
 export function printOutput(
   payload: unknown,
@@ -15,5 +16,8 @@ export function printOutput(
 export function fail(message: string, code = 1): never {
   logCommandError({ message, code });
   process.stderr.write(`${message}\n`);
+  if (isInteractiveMode()) {
+    throw new CommandFailure(message, code, true);
+  }
   process.exit(code);
 }

@@ -61,11 +61,13 @@ export function runCmd(
   args: string[],
   cwd: string,
   env: NodeJS.ProcessEnv = {},
+  input?: string,
 ): CmdResult {
   const result = spawnSync(cmd, args, {
     cwd,
     env: { ...process.env, ...env },
     encoding: "utf8",
+    input,
   });
 
   return {
@@ -339,4 +341,22 @@ export function runBookmarks(
     BOOKMARKS_API_MOCK_FILE: path.join(runDir, "bookmarks.json"),
     ...env,
   });
+}
+
+export function runBookmarksInteractive(
+  runDir: string,
+  args: string[],
+  input: string,
+  env: NodeJS.ProcessEnv = {},
+): CmdResult {
+  return runCmd(
+    "bun",
+    [CLI_ENTRY, ...args],
+    runDir,
+    {
+      BOOKMARKS_API_MOCK_FILE: path.join(runDir, "bookmarks.json"),
+      ...env,
+    },
+    input,
+  );
 }

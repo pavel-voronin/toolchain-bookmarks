@@ -6,6 +6,7 @@ import { printOutput } from "../utils/print";
 
 export type CommonOutputOptions = {
   json?: boolean;
+  human?: boolean;
   fields?: string;
 };
 
@@ -36,7 +37,7 @@ export function renderCommandResult(
   options: CommonOutputOptions,
   meta?: CommandRenderMeta,
 ): void {
-  const json = Boolean(options.json);
+  const json = options.human ? false : Boolean(options.json);
   const fields = parseFields(options.fields ?? null);
   const picked =
     fields.length > 0

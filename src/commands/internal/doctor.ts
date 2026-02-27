@@ -6,6 +6,7 @@ import { loadConfig, resolvePaths } from "../../config/runtime";
 import { validateBookmarksFile } from "../../diff/engine";
 import { listFilesRecursive } from "../../utils/fs";
 import { printOutput } from "../../utils/print";
+import { isInteractiveMode } from "../../runtime/interactive";
 
 type Check = { name: string; status: "OK" | "WARN" | "FAIL"; message: string };
 
@@ -135,7 +136,9 @@ async function runDoctor(options: { json?: boolean } = {}): Promise<void> {
 
   const text = `${summary} (${checks.map((c) => `${c.name}:${c.status}`).join(", ")})`;
   printOutput({ summary, checks }, Boolean(options.json), text);
-  process.exit(hasFail ? 1 : hasWarn ? 2 : 0);
+  if (!isInteractiveMode()) {
+    process.exit(hasFail ? 1 : hasWarn ? 2 : 0);
+  }
 }
 
 export default function registerDoctorCommand(cli: CAC): void {

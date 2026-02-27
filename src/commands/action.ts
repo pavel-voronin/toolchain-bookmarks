@@ -5,6 +5,7 @@ import {
   type CommonOutputOptions,
 } from "../output/service";
 import { fail } from "../utils/print";
+import { CommandFailure } from "../runtime/interactive";
 
 type ActionHandler = (
   ctx: { api: API },
@@ -15,10 +16,10 @@ function splitOutputOptions(options: CommonOutputOptions): {
   output: CommonOutputOptions;
   handlerOptions: Record<string, unknown>;
 } {
-  const { json, fields, ...rest } = options as CommonOutputOptions &
+  const { json, human, fields, ...rest } = options as CommonOutputOptions &
     Record<string, unknown>;
   return {
-    output: { json, fields },
+    output: { json, human, fields },
     handlerOptions: rest,
   };
 }
@@ -40,6 +41,9 @@ export function withAction(
         handlerOptions,
       });
     } catch (error) {
+      if (error instanceof CommandFailure) {
+        throw error;
+      }
       const message = error instanceof Error ? error.message : String(error);
       fail(message, 1);
     }

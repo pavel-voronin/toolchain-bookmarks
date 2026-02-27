@@ -24,6 +24,7 @@ SRC_DIR=""
 STAGED_BIN="$TMP_DIR/bookmarks"
 INTERACTIVE="1"
 INBOX_FOLDER_PATH_UI=""
+SUPPORTED_COMPLETION_SHELLS="zsh"
 
 RESET_STYLE=""
 WHITE_BOLD_STYLE=""
@@ -499,6 +500,216 @@ run_skill_update() {
   (cd "$TARGET_DIR" && ./bookmarks skill-update)
 }
 
+write_zsh_completion_file() {
+  completion_dir="$TARGET_DIR/completions"
+  completion_file="$completion_dir/_bookmarks"
+  mkdir -p "$completion_dir"
+
+  cat > "$completion_file" <<'EOF'
+#compdef bookmarks
+
+_bookmarks() {
+  local context state line
+  local -a commands
+  commands=(
+    'doctor:verify local runtime and dependencies'
+    'skill-update:render local skill files'
+    'self-update:update local binary'
+    'make-diff:poll Chrome bookmarks and persist snapshots'
+    'diff:read next diff event'
+    'request:write missing scenario request'
+    'repl:start interactive shell'
+    'inbox-links:list links from Inbox folder'
+    'get:get bookmarks by ids'
+    'get-children:get direct children of folder'
+    'get-recent:get recent bookmarks'
+    'get-sub-tree:get folder subtree'
+    'get-tree:get full bookmarks tree'
+    'search:search bookmarks'
+    'create:create bookmark or folder'
+    'update:update bookmark'
+    'move:move bookmark'
+    'remove:remove bookmark'
+    'remove-tree:remove folder subtree'
+    'ping:check API bridge'
+  )
+
+  _arguments -s -C \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '(-v --version)'{-v,--version}'[show version]' \
+    '(-j --json)'{-j,--json}'[JSON output]' \
+    '(-H --human)'{-H,--human}'[Human output]' \
+    '1:command:->command' \
+    '*::args:->args'
+
+  case "$state" in
+    command)
+      _describe -t commands 'bookmarks command' commands
+      return 0
+      ;;
+    args)
+      case "$words[2]" in
+        doctor|skill-update|self-update|make-diff|diff)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]'
+          ;;
+        request)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '*::description'
+          ;;
+        repl)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output by default in REPL]' \
+            '(-H --human)'{-H,--human}'[Human output by default in REPL]'
+          ;;
+        inbox-links|get-tree|ping)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields'
+          ;;
+        get)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '*::id'
+          ;;
+        get-children|get-sub-tree|remove|remove-tree)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '1:id'
+          ;;
+        get-recent)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '1:count'
+          ;;
+        search)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '*::query'
+          ;;
+        create)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '--parent-id=[parent folder id]:id' \
+            '--title=[bookmark or folder title]:title' \
+            '--url=[bookmark URL]:url' \
+            '--index=[position in folder]:index'
+          ;;
+        update)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '--title=[new title]:title' \
+            '--url=[new URL]:url' \
+            '1:id'
+          ;;
+        move)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '(-H --human)'{-H,--human}'[Human output]' \
+            '(-f --fields)'{-f+,--fields+}'[Comma-separated output fields]:fields' \
+            '--parent-id=[target parent folder id]:id' \
+            '--index=[target position in parent]:index' \
+            '1:id'
+          ;;
+      esac
+      ;;
+  esac
+}
+EOF
+}
+
+detect_invoking_shell() {
+  parent_shell="$(ps -p "$PPID" -o comm= 2>/dev/null | awk '{print $1}' | sed 's/^-//')"
+  if [ -n "$parent_shell" ]; then
+    case "$parent_shell" in
+      zsh|bash)
+        printf '%s\n' "$parent_shell"
+        return 0
+        ;;
+    esac
+  fi
+
+  login_shell="$(basename "${SHELL:-}" 2>/dev/null || true)"
+  case "$login_shell" in
+    zsh|bash)
+      printf '%s\n' "$login_shell"
+      return 0
+      ;;
+  esac
+
+  printf '\n'
+}
+
+append_zshrc_completion_block_once() {
+  completion_dir="$1"
+  zshrc_file="${HOME:-}/.zshrc"
+  marker_begin="# >>> bookmarks completions >>>"
+  marker_end="# <<< bookmarks completions <<<"
+
+  [ -n "${HOME:-}" ] || return 0
+  [ -d "$completion_dir" ] || return 0
+  [ -f "$completion_dir/_bookmarks" ] || return 0
+
+  if [ ! -f "$zshrc_file" ]; then
+    touch "$zshrc_file"
+  fi
+
+  if grep -Fq "$marker_begin" "$zshrc_file"; then
+    return 0
+  fi
+
+  {
+    printf '\n%s\n' "$marker_begin"
+    printf 'if [ -d "%s" ]; then\n' "$completion_dir"
+    printf '  fpath=("%s" $fpath)\n' "$completion_dir"
+    printf '  autoload -Uz compinit\n'
+    printf '  compinit -i\n'
+    printf 'fi\n'
+    printf '%s\n' "$marker_end"
+  } >> "$zshrc_file"
+}
+
+install_shell_completions() {
+  [ "$INTERACTIVE" = "1" ] || return 0
+
+  shell_name="$(detect_invoking_shell)"
+  [ -n "$shell_name" ] || return 0
+
+  for supported_shell in $SUPPORTED_COMPLETION_SHELLS; do
+    [ "$supported_shell" = "$shell_name" ] || continue
+
+    case "$supported_shell" in
+      zsh)
+        if ! run_step "Generating zsh completion" write_zsh_completion_file; then
+          log "Notice: failed to generate zsh completion; continuing without shell setup."
+          return 0
+        fi
+        if ! run_step "Updating .zshrc completion config" \
+          append_zshrc_completion_block_once "$TARGET_DIR/completions"; then
+          log "Notice: failed to update ~/.zshrc; add completions directory to fpath manually."
+          return 0
+        fi
+        ;;
+    esac
+  done
+}
+
 print_systemd_manual_instructions() {
   log ""
   if [ "$INTERACTIVE" = "1" ]; then
@@ -756,11 +967,13 @@ if [ -f "$TARGET_DIR/config.ts" ]; then
     exit 1
   fi
 
+  install_shell_completions
   handle_systemd_post_install
   run_step "Update complete" true
   exit 0
 fi
 
 run_install_wizard
+install_shell_completions
 handle_systemd_post_install
 run_step "Installation complete" true
