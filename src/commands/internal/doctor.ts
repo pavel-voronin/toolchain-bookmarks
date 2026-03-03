@@ -3,7 +3,6 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { CAC } from "cac";
 import { loadConfig, resolvePaths } from "../../config/runtime";
-import { validateBookmarksFile } from "../../diff/engine";
 import { listFilesRecursive } from "../../utils/fs";
 import { printOutput } from "../../utils/print";
 import { isInteractiveMode } from "../../runtime/interactive";
@@ -44,17 +43,6 @@ async function runDoctor(options: { json?: boolean } = {}): Promise<void> {
       : { name: "config.ts", status: "FAIL", message: "missing config.ts" },
   );
 
-  const bookmarksValidity = validateBookmarksFile(config);
-  checks.push(
-    bookmarksValidity.ok
-      ? { name: "bookmarks-file", status: "OK", message: config.BOOKMARKS_FILE }
-      : {
-          name: "bookmarks-file",
-          status: "FAIL",
-          message: bookmarksValidity.error ?? "invalid file",
-        },
-  );
-
   const skillExists = fs.existsSync(paths.skillDir);
   const unresolved = skillExists
     ? listFilesRecursive(paths.skillDir)
@@ -93,34 +81,15 @@ async function runDoctor(options: { json?: boolean } = {}): Promise<void> {
         },
   );
 
-  const servicePath = path.join(
-    paths.systemdDir,
-    "bookmarks-make-diff.service",
-  );
-  const timerPath = path.join(paths.systemdDir, "bookmarks-make-diff.timer");
+  const servicePath = path.join(paths.systemdDir, "bookmarks.service");
   checks.push(
     fs.existsSync(servicePath)
       ? { name: "systemd.service", status: "OK", message: servicePath }
       : {
           name: "systemd.service",
           status: "FAIL",
-          message: "missing systemd/bookmarks-make-diff.service",
+          message: "missing systemd/bookmarks.service",
         },
-  );
-  checks.push(
-    fs.existsSync(timerPath)
-      ? { name: "systemd.timer", status: "OK", message: timerPath }
-      : {
-          name: "systemd.timer",
-          status: "FAIL",
-          message: "missing systemd/bookmarks-make-diff.timer",
-        },
-  );
-
-  checks.push(
-    fs.existsSync(paths.snapshotsDir)
-      ? { name: "snapshots", status: "OK", message: paths.snapshotsDir }
-      : { name: "snapshots", status: "FAIL", message: "missing snapshots dir" },
   );
   checks.push(
     fs.existsSync(paths.diffsDir)

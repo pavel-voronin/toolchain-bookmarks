@@ -1,5 +1,4 @@
 export type RuntimeConfig = {
-  BOOKMARKS_FILE: string;
   CDP_HTTP: string;
 };
 
@@ -8,9 +7,9 @@ export type AppPaths = {
   configPath: string;
   skillDir: string;
   systemdDir: string;
-  snapshotsDir: string;
   diffsDir: string;
   stateDir: string;
   stateFile: string;
+  baselineFile: string;
   requestsDir: string;
 };

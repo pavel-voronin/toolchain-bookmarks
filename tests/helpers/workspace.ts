@@ -170,7 +170,6 @@ export function setupWorkspace(): {
 
   const configTs = `export const config = ${JSON.stringify(
     {
-      BOOKMARKS_FILE: "./bookmarks.json",
       CDP_HTTP: "http://127.0.0.1:9222",
     },
     null,
@@ -179,7 +178,6 @@ export function setupWorkspace(): {
 
   fs.writeFileSync(path.join(runDir, "config.ts"), configTs, "utf8");
   fs.mkdirSync(path.join(runDir, "requests"), { recursive: true });
-  fs.mkdirSync(path.join(runDir, "snapshots"), { recursive: true });
   fs.mkdirSync(path.join(runDir, "diffs"), { recursive: true });
   fs.mkdirSync(path.join(runDir, "skills", "bookmarks"), { recursive: true });
   fs.mkdirSync(path.join(runDir, "systemd"), { recursive: true });
@@ -199,20 +197,16 @@ export function setupWorkspace(): {
   );
 
   const serviceTemplate = fs.readFileSync(
-    path.join(REPO_ROOT, "assets", "systemd", "bookmarks-make-diff.service"),
+    path.join(REPO_ROOT, "assets", "systemd", "bookmarks.service"),
     "utf8",
   );
   const serviceRendered = serviceTemplate
     .replaceAll("{{BOOKMARKS_CWD}}", runDir)
     .replaceAll("{{BOOKMARKS_BIN}}", path.join(runDir, "bookmarks"));
   fs.writeFileSync(
-    path.join(runDir, "systemd", "bookmarks-make-diff.service"),
+    path.join(runDir, "systemd", "bookmarks.service"),
     serviceRendered,
     "utf8",
-  );
-  fs.copyFileSync(
-    path.join(REPO_ROOT, "assets", "systemd", "bookmarks-make-diff.timer"),
-    path.join(runDir, "systemd", "bookmarks-make-diff.timer"),
   );
 
   return { tmpRoot, runDir };
@@ -319,7 +313,6 @@ export function writeBookmarksFixture(
 
   const configTs = `export const config = ${JSON.stringify(
     {
-      BOOKMARKS_FILE: "./bookmarks.json",
       CDP_HTTP: "http://127.0.0.1:9222",
     },
     null,

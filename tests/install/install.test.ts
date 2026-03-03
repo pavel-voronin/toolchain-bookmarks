@@ -24,14 +24,10 @@ describe("install", () => {
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(runDir, "systemd", "bookmarks-make-diff.service"),
+        path.join(runDir, "systemd", "bookmarks.service"),
       ),
     ).toBe(true);
-    expect(
-      fs.existsSync(path.join(runDir, "systemd", "bookmarks-make-diff.timer")),
-    ).toBe(true);
     expect(fs.existsSync(path.join(runDir, "requests"))).toBe(true);
-    expect(fs.existsSync(path.join(runDir, "snapshots"))).toBe(true);
     expect(fs.existsSync(path.join(runDir, "diffs"))).toBe(true);
   });
 });

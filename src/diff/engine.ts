@@ -1,41 +1,37 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { ensureDir, readJsonFile, writeJsonFile } from "../utils/fs";
-import { normalizeBookmarks, readBookmarksJson } from "./bookmarks-model";
-import type { AppPaths, RuntimeConfig } from "../types/config";
-import type { DiffDocument, DiffState } from "../types/diff";
+import type { AppPaths } from "../types/config";
+import type { CanonicalBookmarkNode } from "../types/canonical";
+import type { DiffDocument, DiffEvent, DiffState } from "../types/diff";
+import { flattenCanonicalTree } from "./canonical-model";
 import { buildEvents } from "./events";
 
 function nowIso(): string {
   return new Date().toISOString();
 }
 
-function hashContent(input: string): string {
-  return crypto.createHash("sha256").update(input).digest("hex");
-}
-
-function snapshotName(ts: string): string {
-  return ts.replace(/[:.]/g, "-").replace(/Z$/, "Z.json");
-}
+const EMPTY_STATE: DiffState = {
+  lastSeq: 0,
+  lastDeliveredDiffId: 0,
+  initializedAt: "",
+  lastHeartbeatAt: "",
+  lastEventAt: "",
+  lastError: "",
+};
 
 function readState(paths: AppPaths): DiffState {
   if (!fs.existsSync(paths.stateFile)) {
-    return {
-      lastSeq: 0,
-      lastSnapshotPath: "",
-      lastSnapshotHash: "",
-      lastRunAt: "",
-      lastDeliveredDiffId: 0,
-    };
+    return { ...EMPTY_STATE };
   }
   const parsed = readJsonFile<Partial<DiffState>>(paths.stateFile);
   return {
     lastSeq: parsed.lastSeq ?? 0,
-    lastSnapshotPath: parsed.lastSnapshotPath ?? "",
-    lastSnapshotHash: parsed.lastSnapshotHash ?? "",
-    lastRunAt: parsed.lastRunAt ?? "",
     lastDeliveredDiffId: parsed.lastDeliveredDiffId ?? 0,
+    initializedAt: parsed.initializedAt ?? "",
+    lastHeartbeatAt: parsed.lastHeartbeatAt ?? "",
+    lastEventAt: parsed.lastEventAt ?? "",
+    lastError: parsed.lastError ?? "",
   };
 }
 
@@ -53,10 +49,15 @@ function listDiffIds(diffsDir: string): number[] {
     .map((name) =>
       /^(\d+)\.json$/.test(name)
         ? Number.parseInt(name.split(".")[0], 10)
-        : NaN,
+        : Number.NaN,
     )
     .filter((n) => Number.isFinite(n))
     .sort((a, b) => a - b);
+}
+
+function maxDiffId(diffsDir: string): number {
+  const ids = listDiffIds(diffsDir);
+  return ids.length > 0 ? (ids[ids.length - 1] ?? 0) : 0;
 }
 
 function readNextDiff(diffsDir: string, sinceId: number): DiffDocument | null {
@@ -68,9 +69,68 @@ function readNextDiff(diffsDir: string, sinceId: number): DiffDocument | null {
   return readJsonFile<DiffDocument>(file);
 }
 
-export function makeDiff(
+export function loadBaseline(paths: AppPaths): CanonicalBookmarkNode[] | null {
+  if (!fs.existsSync(paths.baselineFile)) {
+    return null;
+  }
+  return readJsonFile<CanonicalBookmarkNode[]>(paths.baselineFile);
+}
+
+export function storeBaseline(paths: AppPaths, tree: CanonicalBookmarkNode[]): void {
+  ensureDir(paths.stateDir);
+  writeJsonFile(paths.baselineFile, tree);
+}
+
+export function appendDiffEvent(
   paths: AppPaths,
-  config: RuntimeConfig,
+  event: DiffEvent,
+  ts = nowIso(),
+): DiffDocument {
+  ensureDir(paths.diffsDir);
+  ensureDir(paths.stateDir);
+
+  const state = readState(paths);
+  const nextId =
+    Math.max(state.lastSeq, state.lastDeliveredDiffId, maxDiffId(paths.diffsDir)) +
+    1;
+  const doc: DiffDocument = {
+    schema_version: 1,
+    id: nextId,
+    ts,
+    event,
+  };
+
+  const diffPath = path.join(paths.diffsDir, `${String(nextId).padStart(12, "0")}.json`);
+  writeJsonFile(diffPath, doc);
+
+  writeState(paths, {
+    ...state,
+    lastSeq: nextId,
+    initializedAt: state.initializedAt || ts,
+    lastEventAt: ts,
+    lastHeartbeatAt: ts,
+  });
+
+  return doc;
+}
+
+export function updateHeartbeat(paths: AppPaths, error?: string): DiffState {
+  ensureDir(paths.stateDir);
+  const state = readState(paths);
+  const ts = nowIso();
+  const next: DiffState = {
+    ...state,
+    initializedAt: state.initializedAt || ts,
+    lastHeartbeatAt: ts,
+    ...(error !== undefined ? { lastError: error } : {}),
+  };
+  writeState(paths, next);
+  return next;
+}
+
+export function reconcileFromTree(
+  paths: AppPaths,
+  tree: CanonicalBookmarkNode[],
 ): {
   initialized: boolean;
   wroteDiff: boolean;
@@ -78,83 +138,51 @@ export function makeDiff(
   eventCount: number;
   reason?: string;
 } {
-  ensureDir(paths.snapshotsDir);
   ensureDir(paths.diffsDir);
   ensureDir(paths.stateDir);
 
-  const raw = fs.readFileSync(config.BOOKMARKS_FILE, "utf8");
-  const currentJson = JSON.parse(raw);
-  const currentHash = hashContent(raw);
-  const ts = nowIso();
   const state = readState(paths);
-  const currentSnapshotPath = path.join(paths.snapshotsDir, snapshotName(ts));
+  const ts = nowIso();
+  const prevBaseline = loadBaseline(paths);
 
-  if (!state.lastSnapshotPath || !fs.existsSync(state.lastSnapshotPath)) {
-    writeJsonFile(currentSnapshotPath, currentJson);
+  if (!prevBaseline) {
+    storeBaseline(paths, tree);
     writeState(paths, {
       ...state,
-      lastSnapshotPath: currentSnapshotPath,
-      lastSnapshotHash: currentHash,
-      lastRunAt: ts,
+      initializedAt: state.initializedAt || ts,
+      lastHeartbeatAt: ts,
     });
     return {
       initialized: true,
       wroteDiff: false,
       diffId: null,
       eventCount: 0,
-      reason: "first_snapshot",
+      reason: "first_baseline",
     };
   }
 
-  if (state.lastSnapshotHash === currentHash) {
-    writeState(paths, { ...state, lastRunAt: ts });
-    return {
-      initialized: false,
-      wroteDiff: false,
-      diffId: null,
-      eventCount: 0,
-      reason: "no_changes",
-    };
-  }
-
-  const previousJson = readJsonFile<unknown>(state.lastSnapshotPath);
-  const events = buildEvents(
-    normalizeBookmarks(previousJson),
-    normalizeBookmarks(currentJson),
-    config,
-  );
-  writeJsonFile(currentSnapshotPath, currentJson);
+  const prev = flattenCanonicalTree(prevBaseline);
+  const curr = flattenCanonicalTree(tree);
+  const events = buildEvents(prev, curr);
 
   let diffId: number | null = null;
-  if (events.length > 0) {
-    for (const [offset, event] of events.entries()) {
-      const nextId = state.lastSeq + offset + 1;
-      const diffDoc: DiffDocument = {
-        schema_version: 1,
-        id: nextId,
-        ts,
-        event,
-      };
-      const diffPath = path.join(
-        paths.diffsDir,
-        `${String(nextId).padStart(12, "0")}.json`,
-      );
-      writeJsonFile(diffPath, diffDoc);
-      diffId = nextId;
-    }
-  }
+  events.forEach((event) => {
+    const doc = appendDiffEvent(paths, event, ts);
+    diffId = doc.id;
+  });
 
+  storeBaseline(paths, tree);
+
+  const nextState = readState(paths);
   writeState(paths, {
-    lastSeq: diffId ?? state.lastSeq,
-    lastSnapshotPath: currentSnapshotPath,
-    lastSnapshotHash: currentHash,
-    lastRunAt: ts,
-    lastDeliveredDiffId: state.lastDeliveredDiffId,
+    ...nextState,
+    initializedAt: nextState.initializedAt || ts,
+    lastHeartbeatAt: ts,
   });
 
   return {
     initialized: false,
-    wroteDiff: Boolean(diffId),
+    wroteDiff: events.length > 0,
     diffId,
     eventCount: events.length,
   };
@@ -174,14 +202,7 @@ export function readNextDiffFromCursor(
   return next;
 }
 
-export function validateBookmarksFile(config: RuntimeConfig): {
-  ok: boolean;
-  error?: string;
-} {
-  try {
-    readBookmarksJson(config);
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: (error as Error).message };
-  }
+export function readServiceState(paths: AppPaths): DiffState {
+  ensureDir(paths.stateDir);
+  return readState(paths);
 }

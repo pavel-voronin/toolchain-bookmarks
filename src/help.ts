@@ -15,7 +15,8 @@ function splitCommandSections(body: string): Array<HelpSection> {
     "skill-update",
     "self-update",
     "repl",
-    "make-diff",
+    "service",
+    "health",
     "diff",
     "request <description...>",
   ]);

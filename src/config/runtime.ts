@@ -13,10 +13,10 @@ export function resolvePaths(): AppPaths {
     configPath: path.join(runtimeRoot, "config.ts"),
     skillDir: path.join(runtimeRoot, "skills", "bookmarks"),
     systemdDir: path.join(runtimeRoot, "systemd"),
-    snapshotsDir: path.join(runtimeRoot, "snapshots"),
     diffsDir: path.join(runtimeRoot, "diffs"),
     stateDir: runtimeRoot,
     stateFile: path.join(runtimeRoot, "state.json"),
+    baselineFile: path.join(runtimeRoot, "baseline.json"),
     requestsDir: path.join(runtimeRoot, "requests"),
   };
 }

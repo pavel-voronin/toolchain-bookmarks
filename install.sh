@@ -10,7 +10,6 @@ set -eu
 # Installation source and defaults.
 REPO_TARBALL="${REPO_TARBALL:-https://codeload.github.com/pavel-voronin/toolchain-bookmarks/tar.gz/refs/heads/main}"
 DEFAULT_CDP_HTTP="http://127.0.0.1:9222"
-DEFAULT_BOOKMARKS_FILE="${HOME:-}/.chrome-headless-profile/Default/Bookmarks"
 
 TARGET_DIR="$(pwd)"
 TMP_DIR="$(mktemp -d)"
@@ -197,7 +196,6 @@ print_preview_block() {
     log "$bar Configuration preview"
   fi
   log "$bar"
-  log "$bar BOOKMARKS_FILE: $DEFAULT_BOOKMARKS_FILE"
   log "$bar CDP_HTTP: $cdp_http"
 }
 
@@ -232,7 +230,6 @@ render_config_ts() {
 
   cat > "$TARGET_DIR/config.ts" <<EOF
 export const config = {
-  "BOOKMARKS_FILE": "${DEFAULT_BOOKMARKS_FILE}",
   "CDP_HTTP": "${cdp}"
 } as const;
 
@@ -252,11 +249,8 @@ write_systemd_files() {
   bin_escaped="$(escape_sed_replacement "$TARGET_DIR/bookmarks")"
 
   sed -e "s|{{BOOKMARKS_CWD}}|$cwd_escaped|g" -e "s|{{BOOKMARKS_BIN}}|$bin_escaped|g" \
-    "$SRC_DIR/assets/systemd/bookmarks-make-diff.service" \
-    > "$systemd_dir/bookmarks-make-diff.service"
-
-  cp "$SRC_DIR/assets/systemd/bookmarks-make-diff.timer" \
-    "$systemd_dir/bookmarks-make-diff.timer"
+    "$SRC_DIR/assets/systemd/bookmarks.service" \
+    > "$systemd_dir/bookmarks.service"
 }
 
 install_binary() {
@@ -269,7 +263,6 @@ install_binary() {
 ensure_runtime_layout() {
   mkdir -p "$TARGET_DIR/skills"
   mkdir -p "$TARGET_DIR/requests"
-  mkdir -p "$TARGET_DIR/snapshots"
   mkdir -p "$TARGET_DIR/diffs"
 }
 
@@ -292,7 +285,8 @@ _bookmarks() {
     'doctor:verify local runtime and dependencies'
     'skill-update:render local skill files'
     'self-update:update local binary'
-    'make-diff:poll Chrome bookmarks and persist snapshots'
+    'service:run live Chrome bookmarks listener'
+    'health:check service heartbeat status'
     'diff:read next diff event'
     'request:write missing scenario request'
     'repl:start interactive shell'
@@ -325,10 +319,19 @@ _bookmarks() {
       ;;
     args)
       case "$words[2]" in
-        doctor|skill-update|self-update|make-diff|diff)
+        doctor|skill-update|self-update|diff)
           _arguments \
             '(-j --json)'{-j,--json}'[JSON output]' \
             '(-H --human)'{-H,--human}'[Human output]'
+          ;;
+        service)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]'
+          ;;
+        health)
+          _arguments \
+            '(-j --json)'{-j,--json}'[JSON output]' \
+            '--stale-seconds=[Heartbeat stale threshold in seconds]:seconds'
           ;;
         request)
           _arguments \
@@ -494,10 +497,9 @@ print_systemd_manual_instructions() {
     log "Systemd setup:"
   fi
   log "  mkdir -p ~/.config/systemd/user"
-  log "  cp ./systemd/bookmarks-make-diff.service ~/.config/systemd/user/"
-  log "  cp ./systemd/bookmarks-make-diff.timer ~/.config/systemd/user/"
+  log "  cp ./systemd/bookmarks.service ~/.config/systemd/user/"
   log "  systemctl --user daemon-reload"
-  log "  systemctl --user enable --now bookmarks-make-diff.timer"
+  log "  systemctl --user enable --now bookmarks.service"
 }
 
 systemd_available() {
@@ -510,26 +512,21 @@ user_systemd_available() {
 
 configure_user_systemd() {
   user_unit_dir="$HOME/.config/systemd/user"
-  service_name="bookmarks-make-diff.service"
-  timer_name="bookmarks-make-diff.timer"
+  service_name="bookmarks.service"
   local_service="$TARGET_DIR/systemd/$service_name"
-  local_timer="$TARGET_DIR/systemd/$timer_name"
 
   [ -f "$local_service" ] || die "missing local systemd service file: $local_service"
-  [ -f "$local_timer" ] || die "missing local systemd timer file: $local_timer"
 
   run_step "Preparing user systemd directory" mkdir -p "$user_unit_dir"
   run_step "Copying user systemd service" cp "$local_service" "$user_unit_dir/$service_name"
-  run_step "Copying user systemd timer" cp "$local_timer" "$user_unit_dir/$timer_name"
   run_step "Reloading user systemd" systemctl --user daemon-reload
-  run_step "Enabling and starting user timer" systemctl --user enable --now "$timer_name"
-  run_step "Restarting user timer" systemctl --user restart "$timer_name"
+  run_step "Enabling and starting user service" systemctl --user enable --now "$service_name"
+  run_step "Restarting user service" systemctl --user restart "$service_name"
 }
 
 handle_systemd_post_install() {
   user_unit_dir="$HOME/.config/systemd/user"
-  user_service="$user_unit_dir/bookmarks-make-diff.service"
-  user_timer="$user_unit_dir/bookmarks-make-diff.timer"
+  user_service="$user_unit_dir/bookmarks.service"
 
   print_systemd_manual_instructions
 
@@ -547,10 +544,10 @@ handle_systemd_post_install() {
 
   [ "$INTERACTIVE" = "1" ] || return 0
 
-  if [ -f "$user_service" ] || [ -f "$user_timer" ]; then
+  if [ -f "$user_service" ]; then
     log ""
     log "Notice: user systemd units already exist."
-    log "Automatic setup will update unit files and restart the timer."
+    log "Automatic setup will update unit files and restart the service."
   fi
 
   choice="$(prompt_select "Run user systemd setup automatically?" "Yes" "No")"

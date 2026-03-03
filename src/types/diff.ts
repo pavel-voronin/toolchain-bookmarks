@@ -12,8 +12,9 @@ export type DiffDocument = {
 
 export type DiffState = {
   lastSeq: number;
-  lastSnapshotPath: string;
-  lastSnapshotHash: string;
-  lastRunAt: string;
   lastDeliveredDiffId: number;
+  initializedAt: string;
+  lastHeartbeatAt: string;
+  lastEventAt: string;
+  lastError: string;
 };

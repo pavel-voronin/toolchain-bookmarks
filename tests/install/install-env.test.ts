@@ -8,7 +8,7 @@ import {
 } from "../helpers/workspace";
 
 describe("install env flows", () => {
-  test("writes CDP_HTTP override and default BOOKMARKS_FILE", () => {
+  test("writes CDP_HTTP override", () => {
     const tmpRoot = createTempDir();
     const tarball = createRepoTarball(tmpRoot);
     const runDir = path.join(tmpRoot, "run");
@@ -22,7 +22,7 @@ describe("install env flows", () => {
 
     const configPath = path.join(runDir, "config.ts");
     const configText = fs.readFileSync(configPath, "utf8");
-    expect(configText.includes('"BOOKMARKS_FILE": "')).toBe(true);
+    expect(configText.includes('"BOOKMARKS_FILE": "')).toBe(false);
     expect(configText.includes('"CDP_HTTP": "http://127.0.0.1:9333"')).toBe(
       true,
     );

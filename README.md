@@ -1,6 +1,6 @@
 # toolchain-bookmarks
 
-TypeScript CLI for Chrome bookmarks, built with `bun`, with runtime initialization and skill lifecycle.
+TypeScript CLI for Chrome bookmarks, built with `bun`, with runtime initialization and live event tracking via CDP.
 
 ## Requirements
 
@@ -28,7 +28,8 @@ curl -fsSL https://raw.githubusercontent.com/pavel-voronin/toolchain-bookmarks/m
 - `./bookmarks doctor`
 - `./bookmarks skill-update`
 - `./bookmarks self-update`
-- `./bookmarks make-diff`
+- `./bookmarks service`
+- `./bookmarks health`
 - `./bookmarks diff`
 - `./bookmarks request <scenario description>`
 
@@ -71,17 +72,28 @@ bun test
 - `./config.ts`
 - `./skills/bookmarks/`
 - `./systemd/`
-- `./snapshots/`
 - `./diffs/`
+- `./baseline.json`
 - `./state.json`
 - `./requests/`
 
-## Diff cursor
+## Event stream cursor
 
 `bookmarks diff` uses internal cursor state in `./state.json`.
 
 - agent repeatedly calls `./bookmarks diff`
 - cursor advances automatically when an event is returned
+
+## Service mode
+
+`bookmarks service`:
+
+- does startup reconciliation using current `get-tree` vs `./baseline.json`
+- emits domain events to `./diffs/*.json`
+- subscribes to live `chrome.bookmarks` API events via CDP
+- writes heartbeat fields into `./state.json`
+
+`bookmarks health` checks heartbeat freshness.
 
 ## Request log
 
@@ -99,20 +111,19 @@ All command errors are written to:
 
 - `./errors.log`
 
-## Systemd (Ubuntu, every 5 seconds)
+## Systemd (Ubuntu, user service)
 
 `install.sh` generates:
 
-- `./systemd/bookmarks-make-diff.service`
-- `./systemd/bookmarks-make-diff.timer`
+- `./systemd/bookmarks.service`
 
-Install into system:
+Install into user systemd:
 
 ```bash
-sudo cp ./systemd/bookmarks-make-diff.service /etc/systemd/system/
-sudo cp ./systemd/bookmarks-make-diff.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now bookmarks-make-diff.timer
+mkdir -p ~/.config/systemd/user
+cp ./systemd/bookmarks.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now bookmarks.service
 ```
 
 ## Skill placeholders
