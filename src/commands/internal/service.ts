@@ -25,6 +25,14 @@ async function runService(options: { json?: boolean } = {}): Promise<void> {
 
   const startup = reconcileFromTree(paths, tree);
   let pathIndex = seedParentPathIndex(tree);
+  const syncBaseline = async (): Promise<void> => {
+    const latestTree = await api.getTree();
+    if (!Array.isArray(latestTree)) {
+      throw new Error("get-tree must return array");
+    }
+    storeBaseline(paths, latestTree);
+    pathIndex = seedParentPathIndex(latestTree);
+  };
   updateHeartbeat(paths);
 
   printOutput(
@@ -45,17 +53,12 @@ async function runService(options: { json?: boolean } = {}): Promise<void> {
   try {
     await streamBookmarksApiEvents(config, async (event) => {
       updateHeartbeat(paths);
+      await syncBaseline();
       const mapped = toDomainEvent(event, pathIndex);
       if (!mapped) {
         return;
       }
       appendDiffEvent(paths, mapped, event.ts);
-
-      const latestTree = await api.getTree();
-      if (Array.isArray(latestTree)) {
-        storeBaseline(paths, latestTree);
-        pathIndex = seedParentPathIndex(latestTree);
-      }
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

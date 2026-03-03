@@ -15,6 +15,9 @@ function runHealth(options: { json?: boolean; staleSeconds?: number } = {}): voi
   const paths = resolvePaths();
   const state = readServiceState(paths);
   const staleSeconds = Number(options.staleSeconds ?? 180);
+  if (!Number.isFinite(staleSeconds) || staleSeconds <= 0) {
+    throw new Error("stale-seconds must be a positive number");
+  }
   const staleMs = staleSeconds * 1000;
 
   const now = Date.now();

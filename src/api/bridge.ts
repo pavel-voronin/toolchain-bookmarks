@@ -40,7 +40,19 @@ export type BookmarksApiStreamEvent = {
   args: unknown[];
 };
 
+type StreamCdpClient = {
+  send: (
+    method: string,
+    params?: Record<string, unknown>,
+    sessionId?: string,
+  ) => Promise<unknown>;
+  onEvent: (handler: (msg: CdpMessage) => void) => void;
+  onClose: (handler: () => void) => void;
+};
+
 const BOOKMARKS_PAGE_URL = "chrome://bookmarks/";
+const BOOKMARKS_READY_TIMEOUT_MS = 10_000;
+const BOOKMARKS_READY_POLL_MS = 200;
 
 async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
   const response = await fetch(url, init);
@@ -325,6 +337,7 @@ export async function streamBookmarksApiEvents(
 
   await cdp.send("Runtime.enable", {}, sessionId);
   await cdp.send("Page.enable", {}, sessionId);
+  await waitForBookmarksApiReady(cdp, sessionId);
   await cdp.send("Runtime.addBinding", { name: "__cdpBookmarkEvent" }, sessionId);
 
   const installed = (await cdp.send(
@@ -349,7 +362,24 @@ export async function streamBookmarksApiEvents(
     throw new Error(`Failed to install bookmarks listeners: ${installValue?.reason ?? "unknown error"}`);
   }
 
-  return await new Promise((_, reject) => {
+  return attachBookmarkBindingHandlers(cdp, sessionId, onEvent);
+}
+
+export function attachBookmarkBindingHandlers(
+  cdp: StreamCdpClient,
+  sessionId: string,
+  onEvent: (event: BookmarksApiStreamEvent) => Promise<void> | void,
+): Promise<never> {
+  return new Promise((_, reject) => {
+    let rejected = false;
+    const rejectOnce = (error: unknown) => {
+      if (rejected) {
+        return;
+      }
+      rejected = true;
+      reject(error instanceof Error ? error : new Error(String(error)));
+    };
+
     cdp.onEvent((payload) => {
       if (payload.method !== "Runtime.bindingCalled" || payload.sessionId !== sessionId) {
         return;
@@ -363,19 +393,48 @@ export async function streamBookmarksApiEvents(
       try {
         const raw = String(params.payload ?? "");
         const parsed = JSON.parse(raw) as BookmarksApiStreamEvent;
-        void onEvent(parsed);
+        Promise.resolve(onEvent(parsed)).catch(rejectOnce);
       } catch (error) {
-        reject(error instanceof Error ? error : new Error(String(error)));
+        rejectOnce(error);
       }
     });
 
     cdp.onEvent((payload) => {
       if (payload.method === "Inspector.detached") {
-        reject(new Error("CDP inspector detached"));
+        rejectOnce(new Error("CDP inspector detached"));
       }
     });
-    cdp.onClose(() => reject(new Error("CDP WebSocket closed")));
+    cdp.onClose(() => rejectOnce(new Error("CDP WebSocket closed")));
   });
+}
+
+export async function waitForBookmarksApiReady(
+  cdp: StreamCdpClient,
+  sessionId: string,
+  options: { timeoutMs?: number; pollMs?: number } = {},
+): Promise<void> {
+  const timeoutMs = options.timeoutMs ?? BOOKMARKS_READY_TIMEOUT_MS;
+  const pollMs = options.pollMs ?? BOOKMARKS_READY_POLL_MS;
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const probe = (await cdp.send(
+      "Runtime.evaluate",
+      {
+        expression:
+          "Boolean(globalThis.chrome && chrome.bookmarks && typeof chrome.bookmarks.getTree === 'function')",
+        returnByValue: true,
+      },
+      sessionId,
+    )) as { result?: { value?: unknown } };
+
+    if (probe.result?.value === true) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+
+  throw new Error("Timed out waiting for chrome.bookmarks API to become ready");
 }
 
 export async function callBookmarksApi(
