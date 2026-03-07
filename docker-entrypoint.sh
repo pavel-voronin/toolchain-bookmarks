@@ -3,7 +3,7 @@ set -eu
 
 print_help() {
   cat <<'EOF'
-Chrome Bookmarks Manager container
+Chrome Bookmarks Gateway container
 
 Usage:
   docker run [docker-options] IMAGE [--help|-h]

@@ -1,6 +1,6 @@
 # Chrome Bookmarks Gateway
 
-[![Docker Image](https://img.shields.io/badge/docker-pvoronin%2Fchrome--bookmarks--manager-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/pvoronin/chrome-bookmarks-manager)
+[![Docker Image](https://img.shields.io/badge/docker-pvoronin%2Fchrome--bookmarks--gateway-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/pvoronin/chrome-bookmarks-gateway)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
 
@@ -30,7 +30,7 @@ If you need the agent skill, use [SKILL.md](./SKILL.md) directly as a template a
 Pull image:
 
 ```bash
-docker pull pvoronin/chrome-bookmarks-manager:0.1.0
+docker pull pvoronin/chrome-bookmarks-gateway:0.1.0
 ```
 
 Run container with mounted Chrome profile directory:
@@ -46,7 +46,7 @@ docker run --rm \
   -e AUTH_TOKEN=off \
   -e CHROME_PROFILE_FORCE_UNLOCK=1 \
   -v /absolute/path/to/chrome-profile:/data/chrome-profile \
-  pvoronin/chrome-bookmarks-manager:0.1.0
+  pvoronin/chrome-bookmarks-gateway:0.1.0
 ```
 
 ## Endpoints
