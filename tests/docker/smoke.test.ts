@@ -40,7 +40,7 @@ describe("docker smoke", () => {
   });
 
   test.skipIf(!runDockerSmoke)(
-    "container starts and serves healthz + skill + rpc",
+    "container starts and serves healthz + skills + rpc",
     async () => {
       const hostPort = 39000 + Math.floor(Math.random() * 1000);
       const profileDir = fs.mkdtempSync(
@@ -75,10 +75,28 @@ describe("docker smoke", () => {
       try {
         await waitForHealth(hostPort);
 
-        const skillRes = await fetch(`http://127.0.0.1:${hostPort}/skill.md`);
-        expect(skillRes.status).toBe(200);
-        const skillText = await skillRes.text();
-        expect(skillText).toContain("name: chrome-bookmarks-manager");
+        const scopedSkillRes = await fetch(
+          `http://127.0.0.1:${hostPort}/.well-known/skills/chrome-bookmarks-gateway/SKILL.md`,
+        );
+        expect(scopedSkillRes.status).toBe(200);
+        const skillText = await scopedSkillRes.text();
+        expect(skillText).toContain("name: chrome-bookmarks-gateway");
+
+        const discoverRes = await fetch(
+          `http://127.0.0.1:${hostPort}/.well-known/skills/index.json`,
+        );
+        expect(discoverRes.status).toBe(200);
+        const discoverPayload = (await discoverRes.json()) as {
+          skills: Array<{ name: string; files: string[] }>;
+        };
+        expect(discoverPayload.skills).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: "chrome-bookmarks-gateway",
+              files: ["SKILL.md"],
+            }),
+          ]),
+        );
 
         const rpcRes = await fetch(`http://127.0.0.1:${hostPort}/rpc`, {
           method: "POST",
@@ -168,15 +186,12 @@ describe("docker smoke", () => {
         });
         expect(okRpc.status).toBe(200);
 
-        const deniedSse = await fetch(
-          `http://127.0.0.1:${hostPort}/events/sse`,
-          {
-            redirect: "manual",
-          },
-        );
+        const deniedSse = await fetch(`http://127.0.0.1:${hostPort}/sse`, {
+          redirect: "manual",
+        });
         expect(deniedSse.status).toBe(401);
 
-        const okSse = await fetch(`http://127.0.0.1:${hostPort}/events/sse`, {
+        const okSse = await fetch(`http://127.0.0.1:${hostPort}/sse`, {
           headers: { authorization: "Bearer secret" },
         });
         expect(okSse.status).toBe(200);

@@ -45,7 +45,7 @@ describe("SSE", () => {
       auth: { enabled: true, token: "secret", generated: false },
     });
 
-    const denied = await request(app).get("/events/sse");
+    const denied = await request(app).get("/sse");
     expect(denied.status).toBe(401);
   });
 
@@ -69,7 +69,7 @@ describe("SSE", () => {
       throw new Error("Unexpected server address");
     }
 
-    const url = `http://127.0.0.1:${address.port}/events/sse`;
+    const url = `http://127.0.0.1:${address.port}/sse`;
     const res1 = await fetch(url);
     const res2 = await fetch(url);
 
@@ -118,7 +118,7 @@ describe("SSE", () => {
       throw new Error("Unexpected server address");
     }
 
-    const res = await fetch(`http://127.0.0.1:${address.port}/events/sse`);
+    const res = await fetch(`http://127.0.0.1:${address.port}/sse`);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/event-stream");
 
@@ -152,7 +152,7 @@ describe("SSE", () => {
       throw new Error("Unexpected server address");
     }
 
-    const res = await fetch(`http://127.0.0.1:${address.port}/events/sse`);
+    const res = await fetch(`http://127.0.0.1:${address.port}/sse`);
     const reader = res.body?.getReader();
     if (!reader) {
       throw new Error("SSE response body is missing");

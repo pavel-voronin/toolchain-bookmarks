@@ -212,11 +212,17 @@ describe("WebSocket transport", () => {
     expect(response.result).toEqual([{ id: "0", title: "" }]);
 
     ws.send(
-      JSON.stringify({ jsonrpc: "2.0", id: 2, method: "remove", params: ["100"] }),
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "remove",
+        params: ["100"],
+      }),
     );
-    const voidResponse = await waitForWsMessage<{ id: number; result: unknown }>(
-      ws,
-    );
+    const voidResponse = await waitForWsMessage<{
+      id: number;
+      result: unknown;
+    }>(ws);
     expect(voidResponse).toEqual({
       jsonrpc: "2.0",
       id: 2,
@@ -316,7 +322,7 @@ describe("WebSocket transport", () => {
     clients.push(ws);
     await waitForWsOpen(ws);
 
-    const sseRes = await fetch(`http://127.0.0.1:${address.port}/events/sse`);
+    const sseRes = await fetch(`http://127.0.0.1:${address.port}/sse`);
     const reader = sseRes.body?.getReader();
     if (!reader) {
       throw new Error("SSE response body is missing");

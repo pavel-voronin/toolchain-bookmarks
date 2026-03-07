@@ -12,7 +12,10 @@ const EVENT_PAYLOAD = {
   args: ["10", { id: "10", title: "A" }],
 };
 
-async function waitFor(assertion: () => void, timeoutMs = 2_000): Promise<void> {
+async function waitFor(
+  assertion: () => void,
+  timeoutMs = 2_000,
+): Promise<void> {
   const started = Date.now();
   let lastError: unknown;
 
@@ -31,7 +34,10 @@ async function waitFor(assertion: () => void, timeoutMs = 2_000): Promise<void> 
 
 function waitForWsOpen(ws: WebSocket, timeoutMs = 2_000): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Timed out waiting for ws open")), timeoutMs);
+    const timer = setTimeout(
+      () => reject(new Error("Timed out waiting for ws open")),
+      timeoutMs,
+    );
     ws.once("open", () => {
       clearTimeout(timer);
       resolve();
@@ -96,7 +102,10 @@ describe("Webhook transport", () => {
 
   test("fans out events to all configured urls", async () => {
     const bus = new EventBus();
-    const fetchMock = vi.fn(async () => new Response("ok", { status: 500 }));
+    const fetchMock = vi.fn(
+      async (_input: string | URL | RequestInfo, _init?: RequestInit) =>
+        new Response("ok", { status: 500 }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const stop = setupWebhookTransport({
@@ -111,9 +120,18 @@ describe("Webhook transport", () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    const firstRequest = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const firstCall = fetchMock.mock.calls[0];
+    if (!firstCall) {
+      throw new Error("Expected webhook fetch call");
+    }
+    const firstRequest = firstCall[1];
+    if (!firstRequest) {
+      throw new Error("Expected webhook request init");
+    }
     expect(firstRequest.method).toBe("POST");
-    expect(firstRequest.headers).toEqual({ "Content-Type": "application/json" });
+    expect(firstRequest.headers).toEqual({
+      "Content-Type": "application/json",
+    });
     expect(JSON.parse(String(firstRequest.body))).toMatchObject({
       jsonrpc: "2.0",
       method: "onCreated",
@@ -124,7 +142,9 @@ describe("Webhook transport", () => {
 
   test("logs network errors and continues delivery", async () => {
     const bus = new EventBus();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
     const fetchMock = vi.fn(async (input: string | URL | RequestInfo) => {
       if (String(input).includes("/a")) {
         throw new Error("network down");
@@ -151,7 +171,9 @@ describe("Webhook transport", () => {
 
   test("string rejections are logged without crashing", async () => {
     const bus = new EventBus();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
     const fetchMock = vi.fn(async () => {
       throw "plain failure";
     });
@@ -178,7 +200,9 @@ describe("Webhook transport", () => {
   test("aborts in-flight requests on timeout", async () => {
     vi.useFakeTimers();
     const bus = new EventBus();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     const fetchMock = vi.fn(
       (_input: string | URL | RequestInfo, init?: RequestInit) =>
@@ -309,7 +333,7 @@ describe("Webhook transport", () => {
 
     const ws = new WebSocket(`ws://127.0.0.1:${address.port}/ws`);
     await waitForWsOpen(ws);
-    const sseRes = await realFetch(`http://127.0.0.1:${address.port}/events/sse`);
+    const sseRes = await realFetch(`http://127.0.0.1:${address.port}/sse`);
     const reader = sseRes.body?.getReader();
     if (!reader) {
       throw new Error("SSE response body is missing");

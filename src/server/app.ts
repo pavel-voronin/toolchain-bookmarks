@@ -13,13 +13,48 @@ type AppOptions = {
   auth: AuthMode;
 };
 
+type SkillManifest = {
+  name: string;
+  description: string;
+  files: string[];
+};
+
+const WELL_KNOWN_SKILLS: { skills: SkillManifest[] } = {
+  skills: [
+    {
+      name: "chrome-bookmarks-gateway",
+      description:
+        "Operate Chrome bookmarks through a remote JSON-RPC endpoint. Use when the task requires reading/searching/creating/updating/moving/removing bookmarks",
+      files: ["SKILL.md"],
+    },
+  ],
+};
+
+const SKILL_FILE_SET = new Map(
+  WELL_KNOWN_SKILLS.skills.map((skill) => [skill.name, new Set(skill.files)]),
+);
+
 export function createApp(options: AppOptions) {
   const app = express();
   const authMiddleware = createAuthMiddleware(options.auth);
-  const skillFilePath = resolve(process.cwd(), "SKILL.md");
+  const skillsRootPath = resolve(process.cwd(), "skills");
 
-  app.get(/^\/skill\.md$/i, (_req, res, next) => {
-    res.sendFile(skillFilePath, (error) => {
+  app.get("/.well-known/skills/index.json", (_req, res) => {
+    res.status(200).json(WELL_KNOWN_SKILLS);
+  });
+
+  app.get(/^\/\.well-known\/skills\/([a-z0-9-]+)\/(.+)$/, (req, res, next) => {
+    const skillName = req.params[0];
+    const filePath = req.params[1];
+    const allowedFiles = SKILL_FILE_SET.get(skillName);
+
+    if (!allowedFiles || !allowedFiles.has(filePath)) {
+      res.status(404).end();
+      return;
+    }
+
+    const absolutePath = resolve(skillsRootPath, skillName, filePath);
+    res.sendFile(absolutePath, (error) => {
       if (error) {
         next(error);
       }
@@ -62,7 +97,7 @@ export function createApp(options: AppOptions) {
     },
   );
 
-  app.get("/events/sse", authMiddleware, (req, res) => {
+  app.get("/sse", authMiddleware, (req, res) => {
     res.status(200);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");

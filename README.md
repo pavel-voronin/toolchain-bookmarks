@@ -1,6 +1,10 @@
-# chrome-bookmarks-manager
+# Chrome Bookmarks Gateway
 
-Gives your agent a remote capability to read, search, create, update, move, and delete Chrome bookmarks, plus receive bookmark change events.
+[![Docker Image](https://img.shields.io/badge/docker-pvoronin%2Fchrome--bookmarks--manager-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/pvoronin/chrome-bookmarks-manager)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
+
+Gives your agent a remote capability to read, search, create, update, move, and delete **your synced Chrome bookmarks**, plus receive bookmark change events.
 
 ## What It Does
 
@@ -19,26 +23,32 @@ We did not find another market-ready approach that provides the same practical a
 
 ## Quick Start
 
-Docker Hub: [search images](https://hub.docker.com/search?q=chrome-bookmarks-manager)
+Pull image:
+
+```bash
+docker pull pvoronin/chrome-bookmarks-manager:0.1.0
+```
 
 Run container with mounted Chrome profile directory:
 
-Important: mount an authenticated Chrome profile (signed in to Google, with sync enabled).  
-If you use a fresh/empty profile, bookmarks will not be synced and the service will operate on local empty data.
+> IMPORTANT: mount an authenticated Chrome profile (signed in to Google, with sync enabled).  
+> If you use a fresh/empty profile, bookmarks will not be synced and the service will operate on local empty data.
 
 ```bash
 docker run --rm \
   -p 3000:3000 \
   -e AUTH_TOKEN=off \
   -v /absolute/path/to/chrome-profile:/data/chrome-profile \
-  <docker-hub-image>:<tag>
+  pvoronin/chrome-bookmarks-manager:0.1.0
 ```
 
 ## Endpoints
 
 - `POST /rpc` — JSON-RPC 2.0 (`single`, `batch`, `notifications`)
-- `GET /events/sse` — live bookmark events as JSON-RPC notifications
+- `GET /sse` — live bookmark events as JSON-RPC notifications
 - `GET /ws` — WebSocket transport (`RPC requests/notifications` + live events)
+- `GET /.well-known/skills/index.json` — skills discovery index (RFC)
+- `GET /.well-known/skills/<skill-name>/<file>` — skill file fetch (RFC), e.g. `SKILL.md`
 - `GET /healthz` — public health endpoint
 
 Webhook transport:
@@ -95,7 +105,7 @@ Batch response (only items with `id` are returned):
 ]
 ```
 
-SSE notification payload (`GET /events/sse`):
+SSE notification payload (`GET /sse`):
 
 ```json
 {
@@ -139,7 +149,7 @@ WebSocket RPC request frame (`GET /ws`):
 ## Auth (`AUTH_TOKEN`)
 
 - `AUTH_TOKEN=off` — auth disabled
-- `AUTH_TOKEN=<token>` — Bearer token required on `/rpc`, `/events/sse`, and `/ws`
+- `AUTH_TOKEN=<token>` — Bearer token required on `/rpc`, `/sse`, and `/ws`
 - `AUTH_TOKEN` empty or unset — token is auto-generated and printed once in startup logs
 - `WEBHOOK_URLS` unset/empty — webhook transport disabled
 - `WEBHOOK_URLS=<url1>,<url2>` — send every event to each configured URL
@@ -169,3 +179,27 @@ Webhook payload (`WEBHOOK_URLS`):
   }
 }
 ```
+
+## Testing
+
+Run fast tests (typecheck + unit/integration):
+
+```bash
+npm run test:fast
+```
+
+Run full suite (includes Docker smoke tests):
+
+```bash
+npm test
+```
+
+Coverage thresholds are enforced at `100%` for statements, branches, functions, and lines.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a PR.
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).

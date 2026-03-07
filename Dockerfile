@@ -26,7 +26,7 @@ RUN npm install --omit=dev
 COPY tsconfig.json ./
 COPY tsconfig.build.json ./
 COPY vite.config.ts ./
-COPY SKILL.md ./
+COPY skills ./skills
 COPY src ./src
 RUN npm install --include=dev && npm run build && npm prune --omit=dev
 

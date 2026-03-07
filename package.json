@@ -1,14 +1,16 @@
 {
-  "name": "toolchain-bookmarks",
-  "version": "1.0.0",
+  "name": "chrome-bookmarks-gateway",
+  "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite-node --watch src/index.ts",
     "build": "vite build",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --coverage",
+    "test": "npm run typecheck && RUN_DOCKER_SMOKE=1 vitest run --coverage",
+    "test:fast": "npm run typecheck && vitest run --coverage",
     "format": "prettier . --write"
   },
   "dependencies": {

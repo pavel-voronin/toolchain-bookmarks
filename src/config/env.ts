@@ -67,7 +67,10 @@ function parseWebhookUrls(rawUrls: string | undefined): string[] {
 }
 
 function parseWebhookTimeout(input: string | undefined): number {
-  const parsed = Number.parseInt(String(input ?? DEFAULT_WEBHOOK_TIMEOUT_MS), 10);
+  const parsed = Number.parseInt(
+    String(input ?? DEFAULT_WEBHOOK_TIMEOUT_MS),
+    10,
+  );
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return DEFAULT_WEBHOOK_TIMEOUT_MS;
   }

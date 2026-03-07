@@ -103,7 +103,7 @@ describe("docker sse e2e", () => {
       try {
         await waitForHealth(container.baseUrl);
 
-        const sseRes = await fetch(`${container.baseUrl}/events/sse`);
+        const sseRes = await fetch(`${container.baseUrl}/sse`);
         expect(sseRes.status).toBe(200);
         const reader = sseRes.body?.getReader();
         if (!reader) {
