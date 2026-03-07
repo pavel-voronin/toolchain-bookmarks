@@ -4,3 +4,10 @@ dist
 .gitignore
 tests
 *.log
+tmp
+.runtime
+coverage
+.DS_Store
+README.md
+CONTRIBUTING.md
+LICENSE
