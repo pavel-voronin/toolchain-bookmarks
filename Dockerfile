@@ -29,7 +29,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json tsconfig.build.json vite.config.ts ./
-COPY skills ./skills
 COPY src ./src
 RUN npm run build
 
@@ -39,7 +38,6 @@ WORKDIR /app
 COPY package.json ./
 COPY --from=deps-prod /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/skills ./skills
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh \
   && mkdir -p /data/chrome-profile

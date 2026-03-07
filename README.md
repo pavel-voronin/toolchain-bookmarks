@@ -21,6 +21,10 @@ Direct access to Google Sync bookmarks data is not available to us from external
 To give agents reliable access to real synced bookmarks, we run a real Chrome instance with a connected user profile and attach to it via CDP.  
 We did not find another market-ready approach that provides the same practical access path.
 
+## Agent Skill
+
+If you need the agent skill, use [SKILL.md](./SKILL.md) directly as a template and ask your LLM to adapt it for your setup.
+
 ## Quick Start
 
 Pull image:
@@ -50,11 +54,9 @@ docker run --rm \
 - `POST /rpc` — JSON-RPC 2.0 (`single`, `batch`, `notifications`)
 - `GET /sse` — live bookmark events as JSON-RPC notifications
 - `GET /ws` — WebSocket transport (`RPC requests/notifications` + live events)
-- `GET /.well-known/skills/index.json` — skills discovery index (RFC)
-- `GET /.well-known/skills/<skill-name>/<file>` — skill file fetch (RFC), e.g. `SKILL.md`
 - `GET /healthz` — public health endpoint
 
-Webhook transport:
+### Webhook Transport
 
 - `WEBHOOK_URLS` — comma-separated HTTP(S) URLs for outgoing event delivery
 - `WEBHOOK_TIMEOUT_MS` — request timeout in milliseconds (default `5000`)
@@ -182,22 +184,6 @@ Webhook payload (`WEBHOOK_URLS`):
   }
 }
 ```
-
-## Testing
-
-Run fast tests (typecheck + unit/integration):
-
-```bash
-npm run test:fast
-```
-
-Run full suite (includes Docker smoke tests):
-
-```bash
-npm test
-```
-
-Coverage thresholds are enforced at `100%` for statements, branches, functions, and lines.
 
 ## Contributing
 

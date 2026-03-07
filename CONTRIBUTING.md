@@ -31,3 +31,19 @@ npm run test
 - Update `README.md` for any user-facing behavior changes.
 - Add or update tests for new behavior and bug fixes. 100% coverage is MUST.
 - Use clear commit messages (Conventional Commit style is preferred).
+
+## Testing
+
+Run fast tests (typecheck + unit/integration):
+
+```bash
+npm run test:fast
+```
+
+Run full suite (includes Docker smoke tests):
+
+```bash
+npm test
+```
+
+Coverage thresholds are enforced at `100%` for statements, branches, functions, and lines.

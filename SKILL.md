@@ -5,17 +5,7 @@ description: Operate Chrome bookmarks through a remote JSON-RPC endpoint. Use wh
 
 # Chrome Bookmarks Gateway
 
-## Install (Set Host In This File And REMOVE This Section!)
-
-Before using the skill, replace `<CBG_HOST>` in this file with the real service host and port (ask the user, do not assume).
-
-Do not keep host in environment variables for this skill. Keep it hardcoded in this file.
-
-Do not forget to remove this Install section after setup.
-
-## Scope
-
-Use only JSON-RPC over HTTP:
+## Endpoint
 
 - `POST /rpc`
 
@@ -45,7 +35,7 @@ Supported methods:
 Use this wrapper pattern:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '<JSON-RPC payload>'
 ```
@@ -53,7 +43,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Get full tree:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":1,"method":"getTree","params":[]}'
 ```
@@ -61,7 +51,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Search:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":2,"method":"search","params":["docs"]}'
 ```
@@ -69,7 +59,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Create bookmark:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":3,"method":"create","params":[{"parentId":"<folderId>","title":"Example","url":"https://example.com"}]}'
 ```
@@ -77,7 +67,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Update bookmark:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":4,"method":"update","params":["<id>",{"title":"New title","url":"https://example.org"}]}'
 ```
@@ -85,7 +75,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Move bookmark:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":5,"method":"move","params":["<id>",{"parentId":"<targetFolderId>","index":0}]}'
 ```
@@ -93,7 +83,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Remove bookmark:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":6,"method":"remove","params":["<id>"]}'
 ```
@@ -101,7 +91,7 @@ curl -sS -X POST "<CBG_HOST>/rpc" \
 Remove subtree:
 
 ```bash
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":7,"method":"removeTree","params":["<folderId>"]}'
 ```
@@ -116,7 +106,7 @@ Examples:
 
 ```bash
 # Save full response to file
-curl -sS -X POST "<CBG_HOST>/rpc" \
+curl -sS -X POST "{{BASE_URL}}/rpc" \
   -H "content-type: application/json" \
   --data '{"jsonrpc":"2.0","id":1,"method":"getTree","params":[]}' \
   > tree.json
