@@ -1,6 +1,37 @@
 #!/usr/bin/env sh
 set -eu
 
+print_help() {
+  cat <<'EOF'
+Chrome Bookmarks Manager container
+
+Usage:
+  docker run [docker-options] IMAGE [--help|-h]
+  docker run [docker-options] IMAGE [custom-command ...]
+
+Environment variables:
+  PORT                        API port inside container (default: 3000)
+  AUTH_TOKEN                  off | <token> | empty/unset (auto-generate)
+  CHROME_PROFILE_DIR          Chrome profile path (default: /data/chrome-profile)
+  CHROME_PROFILE_FORCE_UNLOCK 1 to remove stale Singleton* locks (default: 0)
+  WEBHOOK_URLS                Comma-separated http(s) URLs for outgoing events
+  WEBHOOK_TIMEOUT_MS          Webhook timeout in ms (default: 5000)
+
+Examples:
+  docker run --rm -p 3000:3000 -e AUTH_TOKEN=off IMAGE
+  docker run --rm IMAGE --help
+EOF
+}
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ] || [ "${1:-}" = "help" ]; then
+  print_help
+  exit 0
+fi
+
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 PROFILE_DIR="${CHROME_PROFILE_DIR:-/data/chrome-profile}"
 PORT="${PORT:-3000}"
 FORCE_UNLOCK="${CHROME_PROFILE_FORCE_UNLOCK:-0}"

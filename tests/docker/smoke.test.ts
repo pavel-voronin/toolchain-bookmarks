@@ -40,6 +40,25 @@ describe("docker smoke", () => {
   });
 
   test.skipIf(!runDockerSmoke)(
+    "container prints help via --help and exits with code 0",
+    () => {
+      if (!imageTag) {
+        throw new Error("smoke image is not built");
+      }
+
+      const run = spawnSync("docker", ["run", "--rm", imageTag, "--help"], {
+        encoding: "utf8",
+      });
+
+      expect(run.status).toBe(0);
+      expect(run.stdout).toContain("Usage:");
+      expect(run.stdout).toContain("Environment variables:");
+      expect(run.stdout).toContain("CHROME_PROFILE_FORCE_UNLOCK");
+    },
+    120_000,
+  );
+
+  test.skipIf(!runDockerSmoke)(
     "container starts and serves healthz + rpc",
     async () => {
       const hostPort = 39000 + Math.floor(Math.random() * 1000);
