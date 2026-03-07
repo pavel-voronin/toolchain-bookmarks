@@ -4,9 +4,11 @@ import {
   createBookmarksGateway,
   startBookmarksEventStream,
 } from "../cdp/client";
+import { DEFAULT_WEBHOOK_TIMEOUT_MS } from "../config/constants";
 import { resolveStartupConfig } from "../config/env";
 import { EventBus } from "../events/bus";
 import { createApp } from "./app";
+import { setupWebhookTransport } from "./webhook";
 import { setupWebSocketTransport } from "./ws";
 
 const EVENT_RECONNECT_DELAY_MS = 2_000;
@@ -28,6 +30,11 @@ export async function startServer(): Promise<void> {
     bus,
     gateway,
     auth: config.auth,
+  });
+  const stopWebhookTransport = setupWebhookTransport({
+    bus,
+    urls: config.webhooks?.urls ?? [],
+    timeoutMs: config.webhooks?.timeoutMs ?? DEFAULT_WEBHOOK_TIMEOUT_MS,
   });
   const sockets = new Set<Socket>();
 
@@ -109,6 +116,7 @@ export async function startServer(): Promise<void> {
       stopEvents = null;
     }
     stopWebSocketTransport();
+    stopWebhookTransport();
 
     sockets.forEach((socket) => {
       socket.destroy();

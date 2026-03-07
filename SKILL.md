@@ -28,6 +28,8 @@ Do not use this skill for unrelated browser automation tasks outside bookmarks.
   Server-Sent Events stream with JSON-RPC notifications from bookmark events.
 - `GET /ws`:
   WebSocket transport: accepts JSON-RPC requests/notifications and emits bookmark event notifications.
+- `WEBHOOK_URLS`:
+  Outgoing webhook transport: sends bookmark event notifications as JSON-RPC payloads via HTTP POST.
 - `GET /healthz`:
   Service health check.
 

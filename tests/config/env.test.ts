@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { DEFAULT_PORT } from "../../src/config/constants";
+import {
+  DEFAULT_PORT,
+  DEFAULT_WEBHOOK_TIMEOUT_MS,
+} from "../../src/config/constants";
 import { resolveStartupConfig } from "../../src/config/env";
 
 describe("resolveStartupConfig", () => {
@@ -33,5 +36,31 @@ describe("resolveStartupConfig", () => {
       token: "my-token",
       generated: false,
     });
+    expect(cfg.webhooks.urls).toEqual([]);
+    expect(cfg.webhooks.timeoutMs).toBe(DEFAULT_WEBHOOK_TIMEOUT_MS);
+  });
+
+  test("parses webhook urls and timeout", () => {
+    const cfg = resolveStartupConfig({
+      WEBHOOK_URLS:
+        " https://hooks.example/a, http://hooks.example/b ,not-a-url,ftp://invalid ",
+      WEBHOOK_TIMEOUT_MS: "7000",
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.webhooks.urls).toEqual([
+      "https://hooks.example/a",
+      "http://hooks.example/b",
+    ]);
+    expect(cfg.webhooks.timeoutMs).toBe(7000);
+  });
+
+  test("falls back to default webhook timeout when invalid", () => {
+    const cfg = resolveStartupConfig({
+      WEBHOOK_URLS: "https://hooks.example/a",
+      WEBHOOK_TIMEOUT_MS: "-1",
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.webhooks.urls).toEqual(["https://hooks.example/a"]);
+    expect(cfg.webhooks.timeoutMs).toBe(DEFAULT_WEBHOOK_TIMEOUT_MS);
   });
 });

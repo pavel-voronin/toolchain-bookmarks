@@ -67,6 +67,7 @@ describe("startServer shutdown", () => {
   test("forces exit and destroys sockets when server.close hangs", async () => {
     const fakeServer = createFakeServer();
     const stopEvents = vi.fn();
+    const stopWebhookTransport = vi.fn();
     let onDisconnect: ((error: Error) => void) | null = null;
 
     vi.doMock("node:http", () => ({
@@ -88,6 +89,9 @@ describe("startServer shutdown", () => {
     }));
     vi.doMock("../../src/server/app", () => ({
       createApp: vi.fn(() => ({})),
+    }));
+    vi.doMock("../../src/server/webhook", () => ({
+      setupWebhookTransport: vi.fn(() => stopWebhookTransport),
     }));
 
     const exitSpy = vi
@@ -118,6 +122,7 @@ describe("startServer shutdown", () => {
     process.emit("SIGTERM");
 
     expect(stopEvents).toHaveBeenCalledTimes(1);
+    expect(stopWebhookTransport).toHaveBeenCalledTimes(1);
     expect(activeSocket.destroy).toHaveBeenCalledTimes(1);
     expect(fakeServer.close).toHaveBeenCalledTimes(1);
 

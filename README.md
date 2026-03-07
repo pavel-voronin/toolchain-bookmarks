@@ -7,6 +7,7 @@ Gives your agent a remote capability to read, search, create, update, move, and 
 - Provides a stable remote interface for bookmark operations.
 - Wraps Chrome Bookmarks API methods into JSON-RPC procedures.
 - Streams bookmark change events to clients in JSON-RPC notification format.
+- Delivers bookmark change events to webhook endpoints via outgoing HTTP POST.
 
 Official Chrome Bookmarks API docs: [Chrome Extensions Bookmarks API](https://developer.chrome.com/docs/extensions/reference/api/bookmarks)
 
@@ -39,6 +40,11 @@ docker run --rm \
 - `GET /events/sse` — live bookmark events as JSON-RPC notifications
 - `GET /ws` — WebSocket transport (`RPC requests/notifications` + live events)
 - `GET /healthz` — public health endpoint
+
+Webhook transport:
+
+- `WEBHOOK_URLS` — comma-separated HTTP(S) URLs for outgoing event delivery
+- `WEBHOOK_TIMEOUT_MS` — request timeout in milliseconds (default `5000`)
 
 ## RPC Mapping Principles
 
@@ -135,6 +141,9 @@ WebSocket RPC request frame (`GET /ws`):
 - `AUTH_TOKEN=off` — auth disabled
 - `AUTH_TOKEN=<token>` — Bearer token required on `/rpc`, `/events/sse`, and `/ws`
 - `AUTH_TOKEN` empty or unset — token is auto-generated and printed once in startup logs
+- `WEBHOOK_URLS` unset/empty — webhook transport disabled
+- `WEBHOOK_URLS=<url1>,<url2>` — send every event to each configured URL
+- `WEBHOOK_TIMEOUT_MS=<ms>` — webhook request timeout (fallback: `5000`)
 
 Use header:
 
@@ -146,4 +155,17 @@ For WebSocket clients, token can also be passed as query param:
 
 ```text
 ws://host:port/ws?access_token=<token>
+```
+
+Webhook payload (`WEBHOOK_URLS`):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "onCreated",
+  "params": {
+    "ts": "2026-03-07T12:00:00.000Z",
+    "args": ["123", { "id": "123", "title": "New Bookmark" }]
+  }
+}
 ```
