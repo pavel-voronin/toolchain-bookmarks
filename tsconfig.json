@@ -3,13 +3,21 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
     "strict": true,
-    "noEmit": true,
     "skipLibCheck": true,
-    "types": ["bun-types"]
+    "esModuleInterop": true,
+    "noEmit": true,
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": [
+    "src/index.ts",
+    "src/config/constants.ts",
+    "src/config/env.ts",
+    "src/server/**/*.ts",
+    "src/rpc/**/*.ts",
+    "src/cdp/**/*.ts",
+    "src/events/**/*.ts",
+    "tests/**/*.ts"
+  ],
   "exclude": ["dist", "node_modules"]
 }
