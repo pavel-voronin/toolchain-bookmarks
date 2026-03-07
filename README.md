@@ -33,11 +33,14 @@ Run container with mounted Chrome profile directory:
 
 > IMPORTANT: mount an authenticated Chrome profile (signed in to Google, with sync enabled).  
 > If you use a fresh/empty profile, bookmarks will not be synced and the service will operate on local empty data.
+> If startup fails with "profile appears to be in use", close other Chrome processes that use this profile.
+> As a fallback for stale locks, set `CHROME_PROFILE_FORCE_UNLOCK=1` to remove `Singleton*` lock artifacts before launch.
 
 ```bash
 docker run --rm \
   -p 3000:3000 \
   -e AUTH_TOKEN=off \
+  -e CHROME_PROFILE_FORCE_UNLOCK=1 \
   -v /absolute/path/to/chrome-profile:/data/chrome-profile \
   pvoronin/chrome-bookmarks-manager:0.1.0
 ```
