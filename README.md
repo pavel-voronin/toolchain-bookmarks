@@ -30,7 +30,7 @@ If you need the agent skill, use [SKILL.md](./SKILL.md) directly as a template a
 Pull image:
 
 ```bash
-docker pull pvoronin/chrome-bookmarks-gateway:0.1.0
+docker pull pvoronin/chrome-bookmarks-gateway:0.1.1
 ```
 
 Run container with mounted Chrome profile directory:
@@ -46,7 +46,7 @@ docker run --rm \
   -e AUTH_TOKEN=off \
   -e CHROME_PROFILE_FORCE_UNLOCK=1 \
   -v /absolute/path/to/chrome-profile:/data/chrome-profile \
-  pvoronin/chrome-bookmarks-gateway:0.1.0
+  pvoronin/chrome-bookmarks-gateway:0.1.1
 ```
 
 ## Endpoints
