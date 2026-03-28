@@ -22,6 +22,51 @@ describe("auth", () => {
     expect(res.status).toBe(200);
   });
 
+  test("syncz is public and reflects sync state", async () => {
+    const syncedGateway: BookmarksGateway = {
+      call: vi.fn(async () => [{ syncing: true }]),
+    };
+    const syncedApp = createApp({
+      gateway: syncedGateway,
+      bus: new EventBus(),
+      auth: { enabled: true, token: "secret", generated: false },
+    });
+
+    const syncedRes = await request(syncedApp).get("/syncz");
+    expect(syncedRes.status).toBe(200);
+    expect(syncedRes.body).toEqual({ ok: true });
+
+    const unsyncedGateway: BookmarksGateway = {
+      call: vi.fn(async () => [{ syncing: false }]),
+    };
+    const unsyncedApp = createApp({
+      gateway: unsyncedGateway,
+      bus: new EventBus(),
+      auth: { enabled: true, token: "secret", generated: false },
+    });
+
+    const unsyncedRes = await request(unsyncedApp).get("/syncz");
+    expect(unsyncedRes.status).toBe(503);
+    expect(unsyncedRes.body).toEqual({ ok: false });
+  });
+
+  test("syncz returns 503 when gateway check throws", async () => {
+    const failingGateway: BookmarksGateway = {
+      call: vi.fn(async () => {
+        throw new Error("cdp unavailable");
+      }),
+    };
+    const app = createApp({
+      gateway: failingGateway,
+      bus: new EventBus(),
+      auth: { enabled: true, token: "secret", generated: false },
+    });
+
+    const res = await request(app).get("/syncz");
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ ok: false });
+  });
+
   test("requires bearer token when enabled", async () => {
     const app = createApp({
       gateway,

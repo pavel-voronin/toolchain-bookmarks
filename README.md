@@ -30,7 +30,7 @@ If you need the agent skill, use [SKILL.md](./SKILL.md) directly as a template a
 Pull image:
 
 ```bash
-docker pull pvoronin/chrome-bookmarks-gateway:0.1.1
+docker pull pvoronin/chrome-bookmarks-gateway:0.2.0
 ```
 
 Run container with mounted Chrome profile directory:
@@ -46,7 +46,7 @@ docker run --rm \
   -e AUTH_TOKEN=off \
   -e CHROME_PROFILE_FORCE_UNLOCK=1 \
   -v /absolute/path/to/chrome-profile:/data/chrome-profile \
-  pvoronin/chrome-bookmarks-gateway:0.1.1
+  pvoronin/chrome-bookmarks-gateway:0.2.0
 ```
 
 ## Endpoints
@@ -55,6 +55,7 @@ docker run --rm \
 - `GET /sse` — live bookmark events as JSON-RPC notifications
 - `GET /ws` — WebSocket transport (`RPC requests/notifications` + live events)
 - `GET /healthz` — public health endpoint
+- `GET /syncz` — public bookmark sync health endpoint (`200 { ok: true }` or `503 { ok: false }`)
 
 ### Webhook Transport
 

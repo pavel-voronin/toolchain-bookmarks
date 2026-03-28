@@ -1,6 +1,7 @@
 import express from "express";
 import type { BookmarksGateway } from "../cdp/client";
 import type { AuthMode } from "../config/env";
+import { isBookmarksSyncEnabled } from "../domain/sync";
 import { EventBus, toJsonRpcNotification } from "../events/bus";
 import { handleJsonRpcPayload } from "../rpc/handler";
 import { errorResponse, JSON_RPC_ERRORS } from "../rpc/errors";
@@ -18,6 +19,20 @@ export function createApp(options: AppOptions) {
 
   app.get("/healthz", (_req, res) => {
     res.status(200).json({ ok: true });
+  });
+
+  app.get("/syncz", async (_req, res) => {
+    try {
+      const ok = await isBookmarksSyncEnabled(options.gateway);
+      if (ok) {
+        res.status(200).json({ ok: true });
+        return;
+      }
+
+      res.status(503).json({ ok: false });
+    } catch {
+      res.status(503).json({ ok: false });
+    }
   });
 
   app.post(

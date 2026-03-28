@@ -6,6 +6,7 @@ import {
 } from "../cdp/client";
 import { DEFAULT_WEBHOOK_TIMEOUT_MS } from "../config/constants";
 import { resolveStartupConfig } from "../config/env";
+import { startSyncMonitor } from "../domain/sync";
 import { EventBus } from "../events/bus";
 import { createApp } from "./app";
 import { setupWebhookTransport } from "./webhook";
@@ -62,6 +63,10 @@ export async function startServer(): Promise<void> {
   let shuttingDown = false;
   let reconnectTimer: NodeJS.Timeout | null = null;
   let stopEvents: (() => void) | null = null;
+  const stopSyncMonitor = await startSyncMonitor({
+    gateway,
+    bus,
+  });
 
   const scheduleReconnect = (reason: string): void => {
     if (shuttingDown || reconnectTimer) {
@@ -115,6 +120,7 @@ export async function startServer(): Promise<void> {
       stopEvents();
       stopEvents = null;
     }
+    stopSyncMonitor();
     stopWebSocketTransport();
     stopWebhookTransport();
 
