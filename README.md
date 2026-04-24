@@ -30,7 +30,7 @@ If you need the agent skill, use [SKILL.md](./SKILL.md) directly as a template a
 Pull image:
 
 ```bash
-docker pull pvoronin/chrome-bookmarks-gateway:0.2.0
+docker pull pvoronin/chrome-bookmarks-gateway:0.3.0
 ```
 
 Run container with mounted Chrome profile directory:
@@ -46,7 +46,32 @@ docker run --rm \
   -e AUTH_TOKEN=off \
   -e CHROME_PROFILE_FORCE_UNLOCK=1 \
   -v /absolute/path/to/chrome-profile:/data/chrome-profile \
-  pvoronin/chrome-bookmarks-gateway:0.2.0
+  pvoronin/chrome-bookmarks-gateway:0.3.0
+```
+
+### External Chrome CDP
+
+If Chrome is managed outside this container, pass its CDP HTTP endpoint and the
+container will skip launching the bundled local Chrome:
+
+```bash
+docker run --rm \
+  -p 3000:3000 \
+  -e AUTH_TOKEN=off \
+  -e CHROME_CDP_URL=http://chrome:9222 \
+  pvoronin/chrome-bookmarks-gateway:0.3.0
+```
+
+The external Chrome must be started with remote debugging enabled, for example:
+
+```bash
+google-chrome-stable \
+  --headless \
+  --no-sandbox \
+  --disable-dev-shm-usage \
+  --remote-debugging-address=0.0.0.0 \
+  --remote-debugging-port=9222 \
+  --user-data-dir=/data/chrome-profile
 ```
 
 ## Endpoints

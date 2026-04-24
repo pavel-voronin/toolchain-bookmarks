@@ -3,3 +3,4 @@ dist/
 .runtime/
 tmp/
 coverage/
+.DS_Store

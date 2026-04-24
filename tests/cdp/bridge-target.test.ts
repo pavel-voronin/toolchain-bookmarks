@@ -18,6 +18,7 @@ function jsonResponse(payload: unknown, status = 200): MockResponse {
 describe("ensureBridgeTarget", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   test("reuses existing bookmarks tab and closes extras", async () => {
@@ -94,6 +95,31 @@ describe("ensureBridgeTarget", () => {
     expect(
       fetchMock.mock.calls.some(([url]) => String(url).includes("/json/new?")),
     ).toBe(true);
+  });
+
+  test("uses external Chrome CDP URL from environment", async () => {
+    vi.stubEnv("CHROME_CDP_URL", "http://chrome:9222/");
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) => {
+        const url = String(input);
+        if (url === "http://chrome:9222/json/list") {
+          return jsonResponse([
+            {
+              id: "tab-1",
+              type: "page",
+              url: "chrome://bookmarks/",
+              webSocketDebuggerUrl: "ws://chrome:9222/devtools/page/tab-1",
+            },
+          ]) as unknown as Response;
+        }
+        throw new Error(`unexpected fetch url: ${url}`);
+      });
+
+    const target = await ensureBridgeTarget();
+
+    expect(target.id).toBe("tab-1");
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("http://chrome:9222/json/list");
   });
 
   test("ignores close errors for extra bookmarks tabs", async () => {

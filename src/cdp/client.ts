@@ -1,4 +1,4 @@
-import { CDP_HTTP } from "../config/constants";
+import { resolveCdpHttpUrl } from "../config/constants";
 import type { BookmarkEvent } from "../events/bus";
 
 const API_METHODS = new Set([
@@ -63,7 +63,7 @@ async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
 }
 
 async function listTargets(): Promise<CdpTarget[]> {
-  const payload = await fetchJson(`${CDP_HTTP}/json/list`);
+  const payload = await fetchJson(`${resolveCdpHttpUrl()}/json/list`);
   if (!Array.isArray(payload)) {
     throw new Error("Unexpected CDP /json/list payload");
   }
@@ -79,12 +79,13 @@ function isBookmarksPageTarget(target: CdpTarget): boolean {
 }
 
 export async function ensureBridgeTarget(): Promise<CdpTarget> {
+  const cdpHttpUrl = resolveCdpHttpUrl();
   let targets = await listTargets();
   let matches = targets.filter(isBookmarksPageTarget);
 
   if (matches.length === 0) {
     await fetchJson(
-      `${CDP_HTTP}/json/new?${encodeURIComponent(BOOKMARKS_PAGE_URL)}`,
+      `${cdpHttpUrl}/json/new?${encodeURIComponent(BOOKMARKS_PAGE_URL)}`,
       {
         method: "PUT",
       },
@@ -102,7 +103,7 @@ export async function ensureBridgeTarget(): Promise<CdpTarget> {
     matches
       .slice(1)
       .map((target) =>
-        fetch(`${CDP_HTTP}/json/close/${target.id}`).catch(() => undefined),
+        fetch(`${cdpHttpUrl}/json/close/${target.id}`).catch(() => undefined),
       ),
   );
 
@@ -192,7 +193,9 @@ class BrowserCdp {
   }
 
   static async connect(): Promise<BrowserCdp> {
-    const version = (await fetchJson(`${CDP_HTTP}/json/version`)) as {
+    const version = (await fetchJson(
+      `${resolveCdpHttpUrl()}/json/version`,
+    )) as {
       webSocketDebuggerUrl?: string;
     };
     if (!version.webSocketDebuggerUrl) {

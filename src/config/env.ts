@@ -3,6 +3,7 @@ import {
   DEFAULT_CHROME_PROFILE_DIR,
   DEFAULT_PORT,
   DEFAULT_WEBHOOK_TIMEOUT_MS,
+  resolveCdpHttpUrl,
 } from "./constants";
 
 export type AuthMode =
@@ -12,6 +13,7 @@ export type AuthMode =
 export type StartupConfig = {
   port: number;
   chromeProfileDir: string;
+  cdpHttpUrl: string;
   auth: AuthMode;
   webhooks: {
     urls: string[];
@@ -82,6 +84,7 @@ export function resolveStartupConfig(env: NodeJS.ProcessEnv): StartupConfig {
     port: parsePort(env.PORT),
     chromeProfileDir:
       env.CHROME_PROFILE_DIR?.trim() || DEFAULT_CHROME_PROFILE_DIR,
+    cdpHttpUrl: resolveCdpHttpUrl(env),
     auth: resolveAuthMode(env.AUTH_TOKEN),
     webhooks: {
       urls: parseWebhookUrls(env.WEBHOOK_URLS),

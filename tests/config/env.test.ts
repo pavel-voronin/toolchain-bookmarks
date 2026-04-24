@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  DEFAULT_CDP_HTTP,
   DEFAULT_PORT,
   DEFAULT_WEBHOOK_TIMEOUT_MS,
 } from "../../src/config/constants";
@@ -31,6 +32,7 @@ describe("resolveStartupConfig", () => {
 
     expect(cfg.port).toBe(3010);
     expect(cfg.chromeProfileDir).toBe("/tmp/profile");
+    expect(cfg.cdpHttpUrl).toBe(DEFAULT_CDP_HTTP);
     expect(cfg.auth).toEqual({
       enabled: true,
       token: "my-token",
@@ -52,6 +54,30 @@ describe("resolveStartupConfig", () => {
       "http://hooks.example/b",
     ]);
     expect(cfg.webhooks.timeoutMs).toBe(7000);
+  });
+
+  test("uses normalized external Chrome CDP URL", () => {
+    const cfg = resolveStartupConfig({
+      CHROME_CDP_URL: " http://chrome:9222/ ",
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.cdpHttpUrl).toBe("http://chrome:9222");
+  });
+
+  test("falls back to default Chrome CDP URL when invalid", () => {
+    const cfg = resolveStartupConfig({
+      CHROME_CDP_URL: "ws://chrome:9222",
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.cdpHttpUrl).toBe(DEFAULT_CDP_HTTP);
+  });
+
+  test("falls back to default Chrome CDP URL when malformed", () => {
+    const cfg = resolveStartupConfig({
+      CHROME_CDP_URL: "not-a-url",
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.cdpHttpUrl).toBe(DEFAULT_CDP_HTTP);
   });
 
   test("falls back to default webhook timeout when invalid", () => {

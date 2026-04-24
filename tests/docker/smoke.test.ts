@@ -53,6 +53,7 @@ describe("docker smoke", () => {
       expect(run.status).toBe(0);
       expect(run.stdout).toContain("Usage:");
       expect(run.stdout).toContain("Environment variables:");
+      expect(run.stdout).toContain("CHROME_CDP_URL");
       expect(run.stdout).toContain("CHROME_PROFILE_FORCE_UNLOCK");
     },
     120_000,

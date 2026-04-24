@@ -57,6 +57,7 @@ export async function startServer(): Promise<void> {
     } else {
       console.log("auth mode: off");
     }
+    console.log(`chrome cdp url: ${config.cdpHttpUrl}`);
     console.log(`chrome profile dir: ${config.chromeProfileDir}`);
   });
 
